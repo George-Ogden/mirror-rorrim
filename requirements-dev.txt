@@ -1,4 +1,7 @@
+-r requirements.txt
+git+https://github.com/George-Ogden/dbg
 git+https://github.com/George-Ogden/mypy-pytest.git
+git+https://github.com/George-Ogden/pytest-dbg
 mypy
 pip
 pre-commit
