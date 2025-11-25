@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
+import io
 from pathlib import Path
 from typing import overload
 
@@ -66,3 +67,11 @@ class AbsDir(TypedPath):
             case _:
                 raise TypeError()
         return self._join(other, ret_type)
+
+
+@dataclass(frozen=True, slots=True)
+class Remote:
+    repo: str
+
+
+type PyFile = io.TextIOWrapper
