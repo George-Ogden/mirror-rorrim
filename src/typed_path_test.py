@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 import os.path
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
@@ -41,3 +42,31 @@ def test_typed_path_join(
         assert left_path / right_path == _make_path(  # type: ignore [operator]
             expected, os.path.join(left_name, right_name)
         )
+
+
+@pytest.mark.parametrize("path_type", PATH_TYPES)
+@pytest.mark.parametrize(
+    "name, exists, is_file, is_folder",
+    [
+        ("test_data/path_tests/", True, False, True),
+        ("test_data/path_tests/exists", True, True, False),
+        ("test_data/path_tests/doesnotexist", False, False, False),
+    ],
+)
+@pytest.mark.parametrize("property", ["exists", "is_file", "is_folder"])
+def test_path_properties(
+    path_type: type[TypedPath],
+    name: str,
+    property: Literal["exists", "is_file", "is_folder"],
+    exists: bool,
+    is_file: bool,
+    is_folder: bool,
+) -> None:
+    path = _make_path(path_type, name)
+    match property:
+        case "exists":
+            assert path.exists() == exists
+        case "is_file":
+            assert path.is_file() == is_file
+        case "is_folder":
+            assert path.is_folder() == is_folder

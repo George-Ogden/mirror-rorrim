@@ -16,6 +16,15 @@ class TypedPath(abc.ABC):
     def _join[T: TypedPath](self, other: TypedPath, type_: type[T]) -> T:
         return type_(self.path / other.path)
 
+    def exists(self) -> bool:
+        return self.path.exists()
+
+    def is_file(self) -> bool:
+        return self.path.is_file()
+
+    def is_folder(self) -> bool:
+        return self.path.is_dir()
+
 
 @dataclass(frozen=True, slots=True, init=True)
 class RelFile(TypedPath): ...
