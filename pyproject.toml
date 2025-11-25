@@ -26,6 +26,7 @@ disallow_incomplete_defs = true
 disallow_untyped_defs = true
 warn_unused_ignores = true
 strict_equality = true
+plugins = ["mypy_pytest_plugin"]
 
 [tool.pytest.ini_options]
 python_files = "*_test.py"
