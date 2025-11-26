@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 from dataclasses import dataclass
 import io
 from pathlib import Path
@@ -8,11 +7,13 @@ from typing import overload
 
 
 @dataclass(frozen=True, slots=True)
-class TypedPath(abc.ABC):
+class TypedPath:
     path: Path
 
-    @abc.abstractmethod
-    def __init__(self, path: Path) -> None: ...
+    def __init__(self, path: Path | str) -> None:
+        if type(self) is TypedPath:
+            raise TypeError()
+        object.__setattr__(self, "path", Path(path))
 
     def _join[T: TypedPath](self, other: TypedPath, type_: type[T]) -> T:
         return type_(self.path / other.path)
@@ -30,15 +31,15 @@ class TypedPath(abc.ABC):
         return self.path.__fspath__()
 
 
-@dataclass(frozen=True, slots=True, init=True)
+@dataclass(frozen=True, slots=True, init=False)
 class RelFile(TypedPath): ...
 
 
-@dataclass(frozen=True, slots=True, init=True)
+@dataclass(frozen=True, slots=True, init=False)
 class AbsFile(TypedPath): ...
 
 
-@dataclass(frozen=True, slots=True, init=True)
+@dataclass(frozen=True, slots=True, init=False)
 class RelDir(TypedPath):
     @overload
     def __truediv__(self, other: RelFile) -> RelFile: ...
@@ -55,7 +56,7 @@ class RelDir(TypedPath):
         return self._join(other, ret_type)
 
 
-@dataclass(frozen=True, slots=True, init=True)
+@dataclass(frozen=True, slots=True, init=False)
 class AbsDir(TypedPath):
     @overload
     def __truediv__(self, other: RelFile) -> AbsFile: ...

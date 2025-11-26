@@ -10,8 +10,8 @@ from .typed_path import AbsDir, AbsFile, RelDir, RelFile, TypedPath
 PATH_TYPES: Sequence[type[TypedPath]] = [RelFile, AbsFile, RelDir, AbsDir]
 
 
-def _make_path(type_: type[TypedPath], name: str) -> TypedPath:
-    path = Path(name)
+def _make_path(type_: type[TypedPath], path: str | Path) -> TypedPath:
+    path = Path(path)
     if issubclass(type_, AbsFile | AbsDir):
         path = path.absolute()
     return type_(path)
@@ -48,9 +48,9 @@ def test_typed_path_join(
 @pytest.mark.parametrize(
     "name, exists, is_file, is_folder",
     [
-        ("test_data/path_tests/", True, False, True),
-        ("test_data/path_tests/exists", True, True, False),
-        ("test_data/path_tests/doesnotexist", False, False, False),
+        ("path_tests/", True, False, True),
+        ("path_tests/exists", True, True, False),
+        ("path_tests/doesnotexist", False, False, False),
     ],
 )
 @pytest.mark.parametrize("property", ["exists", "is_file", "is_folder"])
@@ -61,8 +61,9 @@ def test_path_properties(
     exists: bool,
     is_file: bool,
     is_folder: bool,
+    test_data_path: AbsDir,
 ) -> None:
-    path = _make_path(path_type, name)
+    path = _make_path(path_type, test_data_path.path / name)
     match property:
         case "exists":
             assert path.exists() == exists
