@@ -1,6 +1,6 @@
 -r requirements.txt
 git+https://github.com/George-Ogden/dbg
-git+https://github.com/George-Ogden/mypy-pytest.git
+git+https://github.com/George-Ogden/mypy-pytest.git@v0.7.1
 git+https://github.com/George-Ogden/pytest-dbg
 mypy
 pip
