@@ -32,3 +32,4 @@ plugins = ["mypy_pytest_plugin"]
 python_files = "*_test.py"
 addopts = '--capture=sys'
 pythonpath = ["."]
+markers = ["typed: marks tests for type checking"]

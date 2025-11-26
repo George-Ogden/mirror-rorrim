@@ -26,6 +26,9 @@ class TypedPath(abc.ABC):
     def is_folder(self) -> bool:
         return self.path.is_dir()
 
+    def __fspath__(self) -> str:
+        return self.path.__fspath__()
+
 
 @dataclass(frozen=True, slots=True, init=True)
 class RelFile(TypedPath): ...
