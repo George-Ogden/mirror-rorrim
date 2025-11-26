@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import io
+import os.path
 from pathlib import Path
 from typing import overload
 
@@ -26,6 +27,10 @@ class TypedPath:
 
     def is_folder(self) -> bool:
         return self.path.is_dir()
+
+    @property
+    def normpath(self) -> str:
+        return os.path.normpath(self)
 
     def __fspath__(self) -> str:
         return self.path.__fspath__()

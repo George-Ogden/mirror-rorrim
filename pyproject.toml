@@ -30,6 +30,6 @@ plugins = ["mypy_pytest_plugin"]
 
 [tool.pytest.ini_options]
 python_files = "*_test.py"
-addopts = '--capture=sys'
+addopts = '--capture=sys --inline-snapshot=review'
 pythonpath = ["."]
 markers = ["typed: marks tests for type checking"]
