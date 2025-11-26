@@ -30,6 +30,9 @@ class TypedPath:
     def __fspath__(self) -> str:
         return self.path.__fspath__()
 
+    def __str__(self) -> str:
+        return repr(str(self.path))
+
 
 @dataclass(frozen=True, slots=True, init=False)
 class RelFile(TypedPath): ...
