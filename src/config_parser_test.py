@@ -6,7 +6,7 @@ import pytest
 import yaml
 from yaml.nodes import Node
 
-from .config import MirrorFileConfig, MirrorRepoConfig
+from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .config_parser import Parser, ParserError
 from .typed_path import RelFile, Remote
 
@@ -29,6 +29,10 @@ def quick_mirror_repo_config(source: str, files: list[tuple[str, str] | str]) ->
     )
 
 
+def quick_mirror_config(repos: list[MirrorRepoConfig]) -> MirrorConfig:
+    return MirrorConfig(repos)
+
+
 @pytest.fixture
 def yaml_node(raw_yaml: str) -> Node:
     raw_yaml = textwrap.dedent(raw_yaml).strip()
@@ -36,7 +40,9 @@ def yaml_node(raw_yaml: str) -> Node:
 
 
 def _test_parse_body(
-    yaml_node: Node, expected: MirrorFileConfig | MirrorRepoConfig | str, method_name: str
+    yaml_node: Node,
+    expected: MirrorFileConfig | MirrorRepoConfig | MirrorConfig | str,
+    method_name: str,
 ) -> None:
     parser = Parser(RelFile("<string>"))
     method = getattr(parser, method_name)
@@ -235,7 +241,7 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
                 - file 1
             """,
             snapshot(
-                "An unexpected error occurred during parsing @ <string>:1:1: mapping is missing key 'source'."
+                "An unexpected error occurred during parsing @ <string>:1:1: repo mapping is missing the key 'source'."
             ),
         ),
         (
@@ -244,7 +250,7 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
             source: magic sauce
             """,
             snapshot(
-                "An unexpected error occurred during parsing @ <string>:1:1: mapping is missing key 'files'."
+                "An unexpected error occurred during parsing @ <string>:1:1: repo mapping is missing the key 'files'."
             ),
         ),
         (
@@ -266,7 +272,7 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
             files: []
             """,
             snapshot(
-                "An unexpected error occurred during parsing @ <string>:2:8: file list is empty."
+                "An unexpected error occurred during parsing @ <string>:2:8: files list is empty."
             ),
         ),
         (
@@ -281,7 +287,7 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
                 - file1
             """,
             snapshot(
-                "An unexpected error occurred during parsing @ <string>:6:7: duplicate file 'file2'; already define on line 3."
+                "An unexpected error occurred during parsing @ <string>:6:7: duplicate file 'file2'; already used on line 3."
             ),
         ),
         (
@@ -296,7 +302,7 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
                 - folder/../file1
             """,
             snapshot(
-                "An unexpected error occurred during parsing @ <string>:7:7: duplicate file 'folder/../file1'; already define on line 2."
+                "An unexpected error occurred during parsing @ <string>:7:7: duplicate file 'folder/../file1'; already used on line 2."
             ),
         ),
         (
@@ -381,7 +387,147 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
                 "An unexpected error occurred during parsing @ <string>:1:8: expected filename as a string or single mapping, got sequence."
             ),
         ),
+        (
+            # wrong type
+            """
+            word
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:1: expected repo mapping, got string."
+            ),
+        ),
     ],
 )
 def test_parse_repo_config(yaml_node: Node, expected: MirrorRepoConfig | str) -> None:
     _test_parse_body(yaml_node, expected, method_name="parse_mirror_repo_config")
+
+
+@pytest.mark.parametrize(
+    "raw_yaml, expected",
+    [
+        (
+            # one repository, one file
+            """
+            repos:
+              - source: source1
+                files: [file1]
+            """,
+            quick_mirror_config([quick_mirror_repo_config("source1", ["file1"])]),
+        ),
+        (
+            # no repositories
+            """
+            repos: []
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:8: repos list is empty."
+            ),
+        ),
+        (
+            # many files across many repos
+            """
+            repos:
+              - source: source1
+                files: [file1, file2]
+              - source: source2
+                files:
+                  - file3
+                  - file4
+                  - file5
+            """,
+            quick_mirror_config(
+                [
+                    quick_mirror_repo_config("source1", ["file1", "file2"]),
+                    quick_mirror_repo_config("source2", ["file3", "file4", "file5"]),
+                ]
+            ),
+        ),
+        (
+            # not list
+            """
+            repos: "string"
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:8: expected sequence of repos, got string."
+            ),
+        ),
+        (
+            # repeated file across repos
+            """
+            repos:
+              - source: source1
+                files: [file1, file2, file3]
+              - source: source2
+                files: [file5, file4, file3]
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:5:27: duplicate file 'file3'; already used on line 3."
+            ),
+        ),
+        (
+            # repeated repos
+            """
+            repos:
+              - source: sourceA
+                files: [fromSourceA]
+              - source: sourceB
+                files: [fromSourceB]
+              - source: sourceA
+                files: [fromSourceAAgain]
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:6:13: duplicate source 'sourceA'; already used on line 2."
+            ),
+        ),
+        (
+            # missing key
+            """
+            {}
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:1: mirror mapping is missing the key 'repos'."
+            ),
+        ),
+        (
+            # type
+            """
+            respo: []
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:1: invalid key 'respo', did you mean 'repos'?"
+            ),
+        ),
+        (
+            # extra key
+            """
+            repos: [{source: source, files: [file]}]
+            extra_key: ":wave:"
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:2:1: mapping key should be one of ['repos'], got 'extra_key'."
+            ),
+        ),
+        (
+            # cyclic reference
+            """
+            repos: &R
+              - source: source
+                files: *R
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:8: recursive reference detected."
+            ),
+        ),
+        (
+            # wrong type
+            """
+            []
+            """,
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:1: expected mirror mapping, got sequence."
+            ),
+        ),
+    ],
+)
+def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> None:
+    _test_parse_body(yaml_node, expected, method_name="parse_mirror_config")

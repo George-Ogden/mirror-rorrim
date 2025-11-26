@@ -9,8 +9,8 @@ from typing import Any, NoReturn, cast
 
 from yaml import MappingNode, Node, ScalarNode, SequenceNode
 
-from .config import MirrorFileConfig, MirrorRepoConfig
-from .typed_path import AbsFile, RelFile, Remote
+from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
+from .typed_path import AbsFile, RelFile, Remote, TypedPath
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,7 +41,10 @@ class Parser:
     _node: Node = field(
         init=False, repr=False, hash=False, compare=False, default=Node("", None, None, None)
     )
-    _parsed_files: dict[str, Node] = field(
+    _visited_filenames: dict[str, Node] = field(
+        init=False, repr=False, hash=False, compare=False, default_factory=dict
+    )
+    _visited_repos: dict[str, Node] = field(
         init=False, repr=False, hash=False, compare=False, default_factory=dict
     )
     _visited_nodes: set[int] = field(
@@ -66,11 +69,12 @@ class Parser:
             node = binding.arguments.get("node")
             if node is None or node is self._node:
                 return method(*args, **kwargs)
+            # Set nodes before to stop RecursionError during fail.
+            previous_node = self._node
+            self._node = node
             if id(node) in self._visited_nodes:
                 self.fail("recursive reference detected.", node=node)
             self._visited_nodes.add(id(node))
-            previous_node = self._node
-            self._node = node
             try:
                 return method(*args, **kwargs)
             finally:
@@ -110,30 +114,77 @@ class Parser:
             case _:
                 return "unknown"
 
+    def parse_mapping[T](
+        self,
+        node: Node,
+        subparsers: dict[str, Callable[[Node], Any]],
+        combine: Callable[..., T],
+        *,
+        name: str,
+    ) -> T:
+        results = {}
+        match node:
+            case MappingNode():
+                key_node: Node
+                value_node: Node
+                for key_node, value_node in node.value:
+                    key = self.parse_string_key(key_node, options=subparsers.keys())
+                    sub_parser = subparsers[key]
+                    if key in results:
+                        self.fail(f"duplicate key {key!r} in mapping.", node=key_node)
+                    results[key] = sub_parser(value_node)
+            case _:
+                self.fail(f"expected {name} mapping, got {self.type_of(node)}.")
+        for key in subparsers.keys():
+            if key not in results.keys():
+                self.fail(f"{name} mapping is missing the key {key!r}.")
+        return combine(**results)
+
+    def parse_sequence[T](
+        self, node: Node, subparser: Callable[[Node], T], *, names: str
+    ) -> list[T]:
+        match node:
+            case SequenceNode():
+                if len(node.value) == 0:
+                    self.fail(f"{names} list is empty.")
+                return [subparser(node) for node in node.value]
+        return self.fail(f"expected sequence of {names}, got {self.type_of(node)}.")
+
     def _relfile_from_scalar_node(self, node: ScalarNode) -> RelFile:
         file = RelFile(node.value)
         # pathlib.Path.resolve uses the filesystem, which could have unwanted links.
         normpath = file.normpath
         if normpath.startswith(".."):
-            return self.fail(
+            self.fail(
                 f"the filename {node.value!r} goes out of the repository and is therefore not valid."
             )
         if normpath in (".", ""):
-            return self.fail(
+            self.fail(
                 f"the filename {node.value!r} points to the root of the repository and is therefore not valid."
             )
         return file
 
-    def _check_duplicate_file(self, file_config: MirrorFileConfig, node: Node) -> None:
-        normpath = file_config.target.normpath
-        if existing_node := self._parsed_files.get(normpath):
+    def _check_duplicate(
+        self, resource: Remote | TypedPath, node: Node, *, visited: dict[str, Node], name: str
+    ) -> None:
+        match resource:
+            case Remote():
+                normpath = os.path.normpath(resource.repo)
+            case TypedPath():
+                normpath = resource.normpath
+        if existing_node := visited.get(normpath):
             line_details = (
                 ""
                 if existing_node.start_mark is None
-                else f"; already define on line {existing_node.start_mark.line + 1}"
+                else f"; already used on line {existing_node.start_mark.line + 1}"
             )
-            self.fail(f"duplicate file {file_config.target}{line_details}.", node=node)
-        self._parsed_files[normpath] = node
+            self.fail(f"duplicate {name} {resource}{line_details}.", node=node)
+        visited[normpath] = node
+
+    def _check_duplicate_file(self, file_config: MirrorFileConfig, node: Node) -> None:
+        self._check_duplicate(
+            file_config.target, node, visited=self._visited_filenames, name="file"
+        )
 
     def parse_mirror_file_config(self, node: Node) -> MirrorFileConfig:
         file_config = None
@@ -164,8 +215,11 @@ class Parser:
                     message = f"invalid key {key!r}, did you mean {suggestion!r}?"
                 else:
                     message = f"mapping key should be one of {list(options)!r}, got {key!r}."
-                return self.fail(message)
+                self.fail(message)
         return self.fail(f"expected a string as the key, got {self.type_of(node)}.")
+
+    def _check_duplicate_remote(self, remote: Remote, node: Node) -> None:
+        self._check_duplicate(remote, node, visited=self._visited_repos, name="source")
 
     def parse_remote(self, node: Node) -> Remote:
         match node:
@@ -174,42 +228,29 @@ class Parser:
                     self.fail(
                         f"remote {node.value!r} points to the same repository, which is not allowed."
                     )
-                return Remote(node.value)
+                remote = Remote(node.value)
+                self._check_duplicate_remote(remote, node)
+                return remote
         return self.fail(f"expected remote as a string, got {self.type_of(node)}.")
 
     def parse_mirror_file_configs(self, node: Node) -> list[MirrorFileConfig]:
-        match node:
-            case SequenceNode():
-                if len(node.value) == 0:
-                    self.fail("file list is empty.")
-                return [self.parse_mirror_file_config(node) for node in node.value]
-        return self.fail(f"expected sequence of files, got {self.type_of(node)}.")
-
-    def parse_mapping[T](
-        self,
-        node: Node,
-        subparsers: dict[str, Callable[[Node], Any]],
-        combine: Callable[..., T],
-    ) -> T:
-        results = {}
-        match node:
-            case MappingNode():
-                key_node: Node
-                value_node: Node
-                for key_node, value_node in node.value:
-                    key = self.parse_string_key(key_node, options=subparsers.keys())
-                    sub_parser = subparsers[key]
-                    if key in results:
-                        return self.fail(f"duplicate key {key!r} in mapping.", node=key_node)
-                    results[key] = sub_parser(value_node)
-        for key in subparsers.keys():
-            if key not in results.keys():
-                return self.fail(f"mapping is missing key {key!r}.")
-        return combine(**results)
+        return self.parse_sequence(node, self.parse_mirror_file_config, names="files")
 
     def parse_mirror_repo_config(self, node: Node) -> MirrorRepoConfig:
         return self.parse_mapping(
             node,
             subparsers=dict(source=self.parse_remote, files=self.parse_mirror_file_configs),
             combine=MirrorRepoConfig,
+            name="repo",
+        )
+
+    def parse_repo_configs(self, node: Node) -> list[MirrorRepoConfig]:
+        return self.parse_sequence(node, self.parse_mirror_repo_config, names="repos")
+
+    def parse_mirror_config(self, node: Node) -> MirrorConfig:
+        return self.parse_mapping(
+            node,
+            subparsers=dict(repos=self.parse_repo_configs),
+            combine=MirrorConfig,
+            name="mirror",
         )

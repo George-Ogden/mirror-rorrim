@@ -85,5 +85,8 @@ class AbsDir(TypedPath):
 class Remote:
     repo: str
 
+    def __str__(self) -> str:
+        return repr(self.repo)
+
 
 type PyFile = io.TextIOWrapper

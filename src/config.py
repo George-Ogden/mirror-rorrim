@@ -13,3 +13,8 @@ class MirrorFileConfig:
 class MirrorRepoConfig:
     source: Remote
     files: list[MirrorFileConfig]
+
+
+@dataclass(frozen=True, slots=True)
+class MirrorConfig:
+    repos: list[MirrorRepoConfig]
