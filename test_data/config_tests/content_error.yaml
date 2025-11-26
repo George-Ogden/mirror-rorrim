@@ -1,0 +1,7 @@
+repos:
+  - source: ../local-repo
+    files:
+      - mirror.yaml
+  - source: remote-repo.com
+    files:
+      - mirror.yaml: mirror.yml

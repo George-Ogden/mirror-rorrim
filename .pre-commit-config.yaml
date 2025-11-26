@@ -30,6 +30,7 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies: [prettier]
+        exclude: /syntax_error\.yaml
 
   - repo: https://github.com/George-Ogden/pre-commit-hooks
     rev: v2.0.2

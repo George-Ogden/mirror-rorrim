@@ -4,11 +4,11 @@ from inline_snapshot import snapshot
 from inline_snapshot._snapshot.undecided_value import UndecidedValue
 import pytest
 import yaml
-from yaml.nodes import Node
+from yaml import Node, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .config_parser import Parser, ParserError
-from .typed_path import RelFile, Remote
+from .typed_path import AbsDir, RelFile, Remote
 
 
 def quick_mirror_file_config(source: str, target: str | None = None) -> MirrorFileConfig:
@@ -531,3 +531,87 @@ def test_parse_repo_config(yaml_node: Node, expected: MirrorRepoConfig | str) ->
 )
 def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> None:
     _test_parse_body(yaml_node, expected, method_name="parse_mirror_config")
+
+
+@pytest.mark.parametrize(
+    "filename, expected",
+    [
+        (
+            "config_tests/single.yaml",
+            quick_mirror_config(
+                [
+                    quick_mirror_repo_config(
+                        "https://github.com/George-Ogden/dbg", ["pyproject.toml"]
+                    )
+                ]
+            ),
+        ),
+        (
+            "config_tests/multiple.yaml",
+            quick_mirror_config(
+                [
+                    quick_mirror_repo_config(
+                        "https://github.com/George-Ogden/mypy-pytest",
+                        ["pyproject.toml", ("requirements-dev.txt", "requirements.txt")],
+                    ),
+                    quick_mirror_repo_config(
+                        "git@github.com:George-Ogden/actions.git",
+                        [
+                            (
+                                ".github/workflows/python-release.yaml",
+                                ".github/workflows/release.yaml",
+                            ),
+                            (
+                                ".github/workflows/python-test.yaml",
+                                ".github/workflows/test.yaml",
+                            ),
+                            (
+                                ".github/workflows/lint.yaml",
+                                ".github/workflows/lint.yaml",
+                            ),
+                        ],
+                    ),
+                ]
+            ),
+        ),
+        (
+            "config_tests/content_error.yaml",
+            snapshot(
+                "An unexpected error occurred during parsing @ TEST_DATA/config_tests/content_error.yaml:7:9: duplicate file 'mirror.yaml'; already used on line 4."
+            ),
+        ),
+        (
+            "config_tests/execution.yaml",
+            snapshot(
+                "An unexpected error occurred during parsing @ TEST_DATA/config_tests/execution.yaml:2:1: mapping key should be one of ['repos'], got 'args'."
+            ),
+        ),
+        (
+            "config_tests/syntax_error.yaml",
+            snapshot(
+                'while scanning a simple key in "TEST_DATA/config_tests/syntax_error.yaml", line 4, column 1 could not find expected \':\' in "TEST_DATA/config_tests/syntax_error.yaml", line 5, column 1'
+            ),
+        ),
+        (
+            "config_tests/doesnotexist.yaml",
+            snapshot(
+                "[Errno 2] No such file or directory: 'TEST_DATA/config_tests/doesnotexist.yaml'"
+            ),
+        ),
+    ],
+)
+def test_parse_files(
+    filename: str, expected: MirrorConfig | Exception | str, test_data_path: AbsDir
+) -> None:
+    filepath = test_data_path / RelFile(filename)
+    if isinstance(expected, str | UndecidedValue | Exception):
+        with pytest.raises((YAMLError, OSError)) as e:
+            Parser.parse_file(filepath)
+        error_msg = str(e.value)
+        file_normalized_msg = error_msg.replace(str(test_data_path.path), "TEST_DATA")
+        space_normalized_msg = " ".join(
+            line.strip() for line in file_normalized_msg.splitlines() if line.strip()
+        )
+        assert space_normalized_msg == expected
+    else:
+        assert Parser.parse_file(filepath) == expected

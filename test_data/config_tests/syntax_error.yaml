@@ -1,0 +1,4 @@
+repos:
+  - source: source
+    files: [file]
+[]

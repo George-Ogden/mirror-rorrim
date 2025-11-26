@@ -7,7 +7,8 @@ import os.path
 from types import NoneType
 from typing import Any, NoReturn, cast
 
-from yaml import MappingNode, Node, ScalarNode, SequenceNode
+import yaml
+from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .typed_path import AbsFile, RelFile, Remote, TypedPath
@@ -20,7 +21,7 @@ class Context:
 
 
 @dataclass(frozen=True, slots=True)
-class ParserError(Exception):
+class ParserError(YAMLError):
     msg: str
     context: Context
 
@@ -37,7 +38,7 @@ class ParserError(Exception):
 
 @dataclass
 class Parser:
-    filename: AbsFile | RelFile
+    filepath: AbsFile | RelFile
     _node: Node = field(
         init=False, repr=False, hash=False, compare=False, default=Node("", None, None, None)
     )
@@ -85,10 +86,10 @@ class Parser:
 
     @property
     def context(self) -> Context:
-        return Context(self.filename, self._node)
+        return Context(self.filepath, self._node)
 
     def fail(self, message: str, *, node: Node | None = None) -> NoReturn:
-        error = ParserError(message, self.context if node is None else Context(self.filename, node))
+        error = ParserError(message, self.context if node is None else Context(self.filepath, node))
         raise error
 
     def type_of(self, node: Node) -> str:
@@ -254,3 +255,13 @@ class Parser:
             combine=MirrorConfig,
             name="mirror",
         )
+
+    def parse(self) -> MirrorConfig:
+        with open(self.filepath) as f:
+            tree = yaml.compose(f)
+        return self.parse_mirror_config(tree)
+
+    @classmethod
+    def parse_file(cls, filepath: AbsFile | RelFile) -> MirrorConfig:
+        parser = cls(filepath)
+        return parser.parse()
