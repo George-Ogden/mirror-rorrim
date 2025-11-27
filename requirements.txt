@@ -1,3 +1,4 @@
+gitpython
 loguru
 platformdirs
 pyyaml

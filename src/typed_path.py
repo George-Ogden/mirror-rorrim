@@ -90,6 +90,9 @@ class AbsDir(TypedPath):
 class Remote:
     repo: str
 
+    def __fspath__(self) -> str:
+        return self.repo
+
     def __str__(self) -> str:
         return repr(self.repo)
 
