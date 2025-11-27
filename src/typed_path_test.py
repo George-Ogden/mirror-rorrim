@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 import os.path
 from pathlib import Path
+import re
 from typing import Literal
 
 import pytest
 
-from .typed_path import AbsDir, AbsFile, RelDir, RelFile, TypedPath
+from .typed_path import AbsDir, AbsFile, RelDir, RelFile, Remote, TypedPath
 
 PATH_TYPES: Sequence[type[TypedPath]] = [RelFile, AbsFile, RelDir, AbsDir]
 
@@ -76,3 +77,49 @@ def test_path_properties(
             assert path.is_file() == is_file
         case "is_folder":
             assert path.is_folder() == is_folder
+
+
+@pytest.mark.parametrize(
+    "a, b, same",
+    [
+        # identical files
+        ("a/b", "a/b", True),
+        # identical urls
+        (
+            "https://github.com/George-Ogden/mypy-pytest.git",
+            "https://github.com/George-Ogden/mypy-pytest.git",
+            True,
+        ),
+        # equivalent files
+        ("a/../b", "b/", True),
+        # equivalent urls
+        (
+            "https://github.com/George-Ogden/mypy-pytest",
+            "https://github.com/George-Ogden/mypy-pytest/",
+            True,
+        ),
+        # different protocols
+        (
+            "git@github.com:George-Ogden/mypy-pytest.git",
+            "https://github.com/George-Ogden/mypy-pytest/",
+            False,
+        ),
+        # different urls
+        (
+            "https://bitbucket.com/George-Ogden/mypy-pytest",
+            "https://github.com/George-Ogden/mypy-pytest",
+            False,
+        ),
+        # different files
+        (
+            "a/b/c",
+            "c/b/a",
+            False,
+        ),
+    ],
+)
+def test_remote_hash(a: str, b: str, same: bool) -> None:
+    assert (Remote(a).hash == Remote(b).hash) == same
+    for name in a, b:
+        pattern = r"^[a-z0-9]{1,200}$"
+        assert re.match(pattern, Remote(name).hash, re.IGNORECASE)

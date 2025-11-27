@@ -154,7 +154,7 @@ class Parser:
     def _relfile_from_scalar_node(self, node: ScalarNode) -> RelFile:
         file = RelFile(node.value)
         # pathlib.Path.resolve uses the filesystem, which could have unwanted links.
-        normpath = file.normpath
+        normpath = file.canonical
         if normpath.startswith(".."):
             self.fail(
                 f"the filename {node.value!r} goes out of the repository and is therefore not valid."
@@ -168,19 +168,15 @@ class Parser:
     def _check_duplicate(
         self, resource: Remote | TypedPath, node: Node, *, visited: dict[str, Node], name: str
     ) -> None:
-        match resource:
-            case Remote():
-                normpath = os.path.normpath(resource.repo)
-            case TypedPath():
-                normpath = resource.normpath
-        if existing_node := visited.get(normpath):
+        canonical = resource.canonical
+        if existing_node := visited.get(canonical):
             line_details = (
                 ""
                 if existing_node.start_mark is None
                 else f"; already used on line {existing_node.start_mark.line + 1}"
             )
             self.fail(f"duplicate {name} {resource}{line_details}.", node=node)
-        visited[normpath] = node
+        visited[canonical] = node
 
     def _check_duplicate_file(self, file_config: MirrorFileConfig, node: Node) -> None:
         self._check_duplicate(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import io
 import os.path
 from pathlib import Path
@@ -29,7 +30,7 @@ class TypedPath:
         return self.path.is_dir()
 
     @property
-    def normpath(self) -> str:
+    def canonical(self) -> str:
         return os.path.normpath(self)
 
     def __fspath__(self) -> str:
@@ -91,6 +92,16 @@ class Remote:
 
     def __str__(self) -> str:
         return repr(self.repo)
+
+    @property
+    def canonical(self) -> str:
+        return os.path.normpath(self.repo)
+
+    @property
+    def hash(self) -> str:
+        return hashlib.blake2b(
+            bytes(self.canonical, encoding="utf-8", errors="ignore"), usedforsecurity=False
+        ).hexdigest()
 
 
 type PyFile = io.TextIOWrapper
