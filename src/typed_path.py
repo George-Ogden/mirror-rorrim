@@ -4,14 +4,14 @@ from dataclasses import dataclass
 import io
 import os.path
 from pathlib import Path
-from typing import overload
+from typing import Self, overload
 
 
 @dataclass(frozen=True, slots=True)
 class TypedPath:
     path: Path
 
-    def __init__(self, path: Path | str) -> None:
+    def __init__(self, path: Path | str | Self) -> None:
         if type(self) is TypedPath:
             raise TypeError()
         object.__setattr__(self, "path", Path(path))
@@ -79,6 +79,10 @@ class AbsDir(TypedPath):
             case _:
                 raise TypeError()
         return self._join(other, ret_type)
+
+    @classmethod
+    def cwd(cls) -> Self:
+        return cls(Path.cwd())
 
 
 @dataclass(frozen=True, slots=True)
