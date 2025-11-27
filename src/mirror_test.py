@@ -47,7 +47,9 @@ from .typed_path import AbsDir, RelFile
         ),
     ],
 )
-def test_mirror_from_config(config_name: str, expected: Mirror, test_data_path: AbsDir) -> None:
-    config_path = test_data_path / RelFile(Path("config_tests") / f"{config_name}.yaml")
+def test_mirror_from_config(
+    config_name: str, expected: Mirror, global_test_data_path: AbsDir
+) -> None:
+    config_path = global_test_data_path / RelFile(Path("config_tests") / f"{config_name}.yaml")
     config = Parser.parse_file(config_path)
     assert Mirror.from_config(config) == expected

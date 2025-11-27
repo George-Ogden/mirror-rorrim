@@ -7,7 +7,7 @@ from .typed_path import AbsDir, AbsFile
 
 
 @pytest.fixture
-def test_data_path() -> AbsDir:
+def global_test_data_path() -> AbsDir:
     return AbsDir(Path(__file__).absolute().parent.parent / "test_data")
 
 

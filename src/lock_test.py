@@ -7,10 +7,15 @@ from typing import TYPE_CHECKING, Self
 import pytest
 
 from .lock import FileSystemLock
-from .typed_path import AbsDir, AbsFile, PyFile, RelFile
+from .typed_path import AbsDir, AbsFile, PyFile, RelDir, RelFile
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite
+
+
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path / RelDir("locking_tests")
 
 
 @pytest.mark.typed
@@ -66,7 +71,7 @@ def test_unlock(tmp_lock_path: AbsFile, test_data_path: AbsDir) -> None:
     lock.unlock(SuccessDumper())
 
     assert file.closed
-    assert filecmp.cmp(tmp_lock_path, test_data_path / RelFile("locking_tests/expected_lock_file"))
+    assert filecmp.cmp(tmp_lock_path, test_data_path / RelFile("expected_lock_file"))
 
 
 @pytest.mark.typed
@@ -94,7 +99,7 @@ def test_create_new_file(tmp_lock_path: AbsFile) -> None:
 @pytest.mark.typed
 def test_create_new_file_exists_already(test_data_path: AbsDir) -> None:
     with pytest.raises(FileExistsError):
-        FileSystemLock.create(test_data_path / RelFile("locking_tests/existing_lock"))
+        FileSystemLock.create(test_data_path / RelFile("existing_lock"))
 
 
 @pytest.mark.typed

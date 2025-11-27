@@ -8,7 +8,12 @@ from yaml import Node, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .config_parser import Parser, ParserError
-from .typed_path import AbsDir, RelFile, Remote
+from .typed_path import AbsDir, RelDir, RelFile, Remote
+
+
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path / RelDir("config_tests")
 
 
 def quick_mirror_file_config(source: str, target: str | None = None) -> MirrorFileConfig:
@@ -537,7 +542,7 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
     "filename, expected",
     [
         (
-            "config_tests/single.yaml",
+            "single.yaml",
             quick_mirror_config(
                 [
                     quick_mirror_repo_config(
@@ -547,7 +552,7 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
             ),
         ),
         (
-            "config_tests/multiple.yaml",
+            "multiple.yaml",
             quick_mirror_config(
                 [
                     quick_mirror_repo_config(
@@ -575,28 +580,26 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
             ),
         ),
         (
-            "config_tests/content_error.yaml",
+            "content_error.yaml",
             snapshot(
-                "An unexpected error occurred during parsing @ TEST_DATA/config_tests/content_error.yaml:7:9: duplicate file 'mirror.yaml'; already used on line 4."
+                "An unexpected error occurred during parsing @ TEST_DATA/content_error.yaml:7:9: duplicate file 'mirror.yaml'; already used on line 4."
             ),
         ),
         (
-            "config_tests/execution.yaml",
+            "execution.yaml",
             snapshot(
-                "An unexpected error occurred during parsing @ TEST_DATA/config_tests/execution.yaml:2:1: mapping key should be one of ['repos'], got 'args'."
+                "An unexpected error occurred during parsing @ TEST_DATA/execution.yaml:2:1: mapping key should be one of ['repos'], got 'args'."
             ),
         ),
         (
-            "config_tests/syntax_error.yaml",
+            "syntax_error.yaml",
             snapshot(
-                'while scanning a simple key in "TEST_DATA/config_tests/syntax_error.yaml", line 4, column 1 could not find expected \':\' in "TEST_DATA/config_tests/syntax_error.yaml", line 5, column 1'
+                'while scanning a simple key in "TEST_DATA/syntax_error.yaml", line 4, column 1 could not find expected \':\' in "TEST_DATA/syntax_error.yaml", line 5, column 1'
             ),
         ),
         (
-            "config_tests/doesnotexist.yaml",
-            snapshot(
-                "[Errno 2] No such file or directory: 'TEST_DATA/config_tests/doesnotexist.yaml'"
-            ),
+            "doesnotexist.yaml",
+            snapshot("[Errno 2] No such file or directory: 'TEST_DATA/doesnotexist.yaml'"),
         ),
     ],
 )

@@ -17,6 +17,11 @@ def _make_path(type_: type[TypedPath], path: str | Path) -> TypedPath:
     return type_(path)
 
 
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path / RelDir("path_tests")
+
+
 @pytest.mark.parametrize("left_type", PATH_TYPES)
 @pytest.mark.parametrize("right_type", PATH_TYPES)
 @pytest.mark.parametrize("left_name", ["folder", "file"])
@@ -48,9 +53,9 @@ def test_typed_path_join(
 @pytest.mark.parametrize(
     "name, exists, is_file, is_folder",
     [
-        ("path_tests/", True, False, True),
-        ("path_tests/exists", True, True, False),
-        ("path_tests/doesnotexist", False, False, False),
+        ("", True, False, True),
+        ("exists", True, True, False),
+        ("doesnotexist", False, False, False),
     ],
 )
 @pytest.mark.parametrize("property", ["exists", "is_file", "is_folder"])
