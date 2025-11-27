@@ -1,3 +1,6 @@
+from glob import glob
+import os
+import shutil
 from typing import Any
 
 import git
@@ -39,13 +42,24 @@ def quick_mirror(repos: list[MirrorRepo]) -> Mirror:
     return Mirror(repos)
 
 
-def setup_repo(path: AbsDir | str, files: dict[str, Any]) -> None:
+def add_commit(path: AbsDir | str, files: dict[str, Any]) -> None:
     path = AbsDir(path)
     repo = git.Repo.init(path)
+
+    for file in glob(str(path.path / "*")):
+        if os.path.isfile(file):
+            os.remove(file)
+        else:
+            shutil.rmtree(file)
+
     for filename, contents in files.items():
         filepath = path / RelFile(filename)
         filepath.path.parent.mkdir(exist_ok=True, parents=True)
         with open(filepath, "w") as f:
             f.write(str(contents))
         repo.index.add(filename)
-    repo.index.commit("Initial commit")
+    try:
+        num_commits = len(list(repo.iter_commits()))
+    except ValueError:
+        num_commits = 0
+    repo.index.commit(f"Commit {num_commits + 1}")
