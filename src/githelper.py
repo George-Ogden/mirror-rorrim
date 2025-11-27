@@ -1,3 +1,6 @@
+import functools
+import shutil
+
 import git
 
 from .typed_path import AbsDir, Remote
@@ -5,12 +8,27 @@ from .typed_path import AbsDir, Remote
 
 class GitHelper:
     @classmethod
-    def clone(cls, remote: Remote, local: AbsDir) -> None:
+    @functools.cache
+    def checkout(cls, remote: Remote, local: AbsDir) -> None:
+        try:
+            cls._clone(remote, local)
+        except git.GitCommandError as e:
+            try:
+                try:
+                    cls._sync(local)
+                except git.InvalidGitRepositoryError:
+                    shutil.rmtree(local, ignore_errors=True)
+                    cls._clone(remote, local)
+            except Exception:
+                raise e from None
+
+    @classmethod
+    def _clone(cls, remote: Remote, local: AbsDir) -> None:
         # Convert to string explicitly to gitpython-developers/GitPython#2085
         git.Repo.clone_from(remote.__fspath__(), local.__fspath__())
 
     @classmethod
-    def sync(cls, remote: Remote, local: AbsDir) -> None:
+    def _sync(cls, local: AbsDir) -> None:
         # gitpython-developers/GitPython#2085
         repo = git.Repo(local.__fspath__())
         [fetch_info] = repo.remote().fetch()

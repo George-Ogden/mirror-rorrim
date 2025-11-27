@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import functools
 import hashlib
 import io
 import os.path
@@ -86,7 +87,7 @@ class AbsDir(TypedPath):
         return cls(Path.cwd())
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Remote:
     repo: str
 
@@ -100,7 +101,7 @@ class Remote:
     def canonical(self) -> str:
         return os.path.normpath(self.repo)
 
-    @property
+    @functools.cached_property
     def hash(self) -> str:
         return hashlib.blake2b(
             bytes(self.canonical, encoding="utf-8", errors="ignore"), usedforsecurity=False

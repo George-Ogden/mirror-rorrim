@@ -20,7 +20,7 @@ class Context:
     node: Node
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class ParserError(YAMLError):
     msg: str
     context: Context
