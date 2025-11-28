@@ -7,4 +7,5 @@ mypy
 pip
 pre-commit
 pytest
+syrupy
 types-pyyaml

@@ -1,0 +1,15 @@
+# serializer version: 1
+# name: test_diff_apply[filepath2]
+  '''
+  line 1 is fine
+  <<<<<<< ours
+  line 2 is conflicted
+  line 3 is okay though
+  =======
+  line 2 has a conflict
+  line 3 is okay though
+  line 4 good too
+  >>>>>>> theirs
+
+  '''
+# ---

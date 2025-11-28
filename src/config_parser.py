@@ -4,7 +4,6 @@ import difflib
 import functools
 import inspect
 import os.path
-from types import NoneType
 from typing import Any, NoReturn, cast
 
 import yaml
@@ -104,7 +103,7 @@ class Parser:
                         return "integer"
                     case float():
                         return "float"
-                    case NoneType():
+                    case None:
                         return "null"
                     case _:
                         return type(node.value).__name__
