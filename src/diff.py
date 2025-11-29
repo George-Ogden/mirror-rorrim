@@ -7,37 +7,49 @@ from typing import Self
 import git
 from git.cmd import _AutoInterrupt as AutoInterrupt
 
-from .typed_path import AbsDir, RelFile
+from .file import MirrorFile
+from .typed_path import AbsDir
 
 
 @dataclass
 class Diff:
-    file: RelFile
+    file: MirrorFile
     patch: str
 
     @classmethod
-    def new_file(cls, repo: AbsDir, file: RelFile) -> Self:
+    def new_file(cls, repo: AbsDir, file: MirrorFile) -> Self:
         # gitpython-developers/GitPython#2085
         cmd: AutoInterrupt = git.Repo(os.fspath(repo)).git.diff(
-            "--no-index", "--", os.devnull, os.fspath(file), as_process=True
+            "--no-index", "--", os.devnull, os.fspath(file.source), as_process=True
         )
         assert cmd.proc is not None
         assert cmd.proc.stdout is not None
         _ret_code = cmd.proc.wait()
-        stdout = git.safe_decode(cmd.proc.stdout.read())
-        assert stdout is not None
-        _header, patch = stdout.split("\n", maxsplit=1)
+        stdout: str = git.safe_decode(cmd.proc.stdout.read())
+        _header, *patch_lines = stdout.splitlines(keepends=True)
+        cls.update_patch_lines(patch_lines, file)
         return cls(
             file=file,
-            patch=patch,
+            patch="".join(patch_lines),
         )
+
+    @classmethod
+    def update_patch_lines(cls, patch_lines: list[str], file: MirrorFile) -> None:
+        for i, line in enumerate(patch_lines):
+            if line.startswith("+++"):
+                line = f"+++ b{os.path.sep}{os.fspath(file.target)}\n"
+            elif line.startswith("@@"):
+                break
+            else:
+                continue
+            patch_lines[i] = line
 
     def apply(self, local: AbsDir) -> None:
         # gitpython-developers/GitPython#2085
         repo = git.Repo(os.fspath(local))
         with contextlib.suppress(git.GitCommandError):
             # repo.index.add is not syncing
-            repo.git.add(os.fspath(self.file))
+            repo.git.add(os.fspath(self.file.target))
         cmd: AutoInterrupt = repo.git.apply(
             "--allow-empty", "-3", "-", istream=PIPE, as_process=True
         )

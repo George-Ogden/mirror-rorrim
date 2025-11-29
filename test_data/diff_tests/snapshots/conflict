@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_diff_apply[filepath2]
+# name: test_diff_apply[file2]
   '''
   line 1 is fine
   <<<<<<< ours

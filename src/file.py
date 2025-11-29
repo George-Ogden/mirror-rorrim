@@ -5,7 +5,7 @@ from .config import MirrorFileConfig
 from .typed_path import AbsDir, RelFile
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class MirrorFile:
     source: RelFile
     target: RelFile
