@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import git
 import pytest
 from syrupy.assertion import SnapshotAssertion
 from syrupy.extensions.amber import AmberSnapshotExtension
@@ -19,6 +20,13 @@ def global_test_data_path() -> AbsDir:
 @pytest.fixture
 def typed_tmp_path(tmp_path: Path) -> AbsDir:
     return AbsDir(tmp_path)
+
+
+@pytest.fixture
+def local_git_repo(typed_tmp_path: AbsDir) -> AbsDir:
+    # gitpython-developers/GitPython#2085
+    git.Repo.init(os.fspath(typed_tmp_path))
+    return typed_tmp_path
 
 
 @pytest.fixture

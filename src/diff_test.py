@@ -29,23 +29,22 @@ def test_name(file: MirrorFile) -> str:
         quick_mirror_file("new"),
         quick_mirror_file("conflict"),
         quick_mirror_file("new", "rename"),
+        quick_mirror_file("empty", "new-empty"),
     ],
 )
 def test_diff_apply(
-    file: MirrorFile, test_data_path: AbsDir, snapshot: SnapshotAssertion, typed_tmp_path: AbsDir
+    file: MirrorFile, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: AbsDir
 ) -> None:
     remote = AbsDir(tempfile.mkdtemp())
     shutil.copytree(test_data_path / RelDir("remote"), remote, dirs_exist_ok=True)
     # gitpython-developers/GitPython#2085
     git.Repo.init(os.fspath(remote))
     diff = Diff.new_file(remote, file)
-    tmp_filepath = typed_tmp_path / file.target
+    tmp_filepath = local_git_repo / file.target
     tmp_filepath.path.parent.mkdir(parents=True, exist_ok=True)
     current_path = test_data_path / RelDir("local") / file.target
     if current_path.exists():
         shutil.copy2(current_path, tmp_filepath)
-    # gitpython-developers/GitPython#2085
-    git.Repo.init(os.fspath(typed_tmp_path))
-    diff.apply(typed_tmp_path)
+    diff.apply(local_git_repo)
     with open(tmp_filepath) as f:
         assert f.read() == snapshot

@@ -37,12 +37,33 @@ class Diff:
     def update_patch_lines(cls, patch_lines: list[str], file: MirrorFile) -> None:
         for i, line in enumerate(patch_lines):
             if line.startswith("+++"):
-                line = f"+++ b{os.path.sep}{os.fspath(file.target)}\n"
+                line = cls._addition(file)
             elif line.startswith("@@"):
-                break
+                # Delete header.
+                patch_lines.pop(0)
+                return
             else:
                 continue
             patch_lines[i] = line
+        # Patch must be empty, so add extra lines.
+        cls._update_empty_patch_lines(patch_lines, file)
+
+    @classmethod
+    def _update_empty_patch_lines(cls, patch_lines: list[str], file: MirrorFile) -> None:
+        patch_lines.insert(0, cls._empty_header(file))
+        patch_lines.extend((cls._addition(file), cls._empty_deletion()))
+
+    @classmethod
+    def _empty_header(cls, file: MirrorFile) -> str:
+        return f"diff --git a/{os.fspath(file.target)} b/{os.fspath(file.target)}\n"
+
+    @classmethod
+    def _addition(cls, file: MirrorFile) -> str:
+        return f"+++ b/{os.fspath(file.target)}\n"
+
+    @classmethod
+    def _empty_deletion(cls) -> str:
+        return f"--- {os.devnull}\n"
 
     def apply(self, local: AbsDir) -> None:
         # gitpython-developers/GitPython#2085

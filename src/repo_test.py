@@ -1,14 +1,23 @@
 from collections.abc import Callable, Generator
+import os
+import shutil
 import tempfile
 from unittest import mock
 
+import git
 from inline_snapshot import snapshot
 import pytest
+from syrupy.assertion import SnapshotAssertion
 
 from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
 from .test_utils import add_commit, quick_mirror_repo
-from .typed_path import AbsDir
+from .typed_path import AbsDir, RelDir, RelFile
+
+
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path / RelDir("repo_tests")
 
 
 @pytest.fixture
@@ -83,3 +92,59 @@ def test_checkout(
         error_msg = str(e.value)
         assert error_msg == error_msg
         assert error_msg.endswith(".")
+
+
+@pytest.fixture
+def test_name(repo: MirrorRepo) -> str:
+    return repo.source.repo
+
+
+def empty_repo_copy_one_file_test_case() -> MirrorRepo:
+    return quick_mirror_repo("one_file", ["file"])
+
+
+def non_empty_repo_copy_files_without_renaming_test_case() -> MirrorRepo:
+    repo = quick_mirror_repo("no_renaming", ["identical", "conflict", "empty", "file"])
+    return repo
+
+
+def repo_renaming_test_case() -> MirrorRepo:
+    return quick_mirror_repo(
+        "renaming",
+        [
+            "identical",
+            ("file", "new"),
+            ("conflict", "exists"),
+            ("empty", "empty-new"),
+            ("file", "empty"),
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    "repo",
+    [
+        empty_repo_copy_one_file_test_case(),
+        non_empty_repo_copy_files_without_renaming_test_case(),
+        repo_renaming_test_case(),
+    ],
+)
+def test_update_all(
+    repo: MirrorRepo, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: AbsDir
+) -> None:
+    for file in repo.files:
+        existing_file = test_data_path / RelDir("local") / file.target
+        if existing_file.exists():
+            shutil.copy2(existing_file, local_git_repo)
+    # gitpython-developers/GitPython#2085
+    git.Repo.init(os.fspath(repo.cache))
+    shutil.copytree(test_data_path / RelDir("remote"), repo.cache, dirs_exist_ok=True)
+    repo.update_all(local_git_repo)
+
+    repo_contents = {}
+    for _, _, filenames in local_git_repo.path.walk():
+        for filename in filenames:
+            with open(local_git_repo / RelFile(filename)) as f:
+                repo_contents[filename] = f.read()
+        break
+    assert repo_contents == snapshot

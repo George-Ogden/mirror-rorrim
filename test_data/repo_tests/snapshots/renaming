@@ -1,0 +1,50 @@
+# serializer version: 1
+# name: test_update_all[repo2]
+  dict({
+    'empty': '''
+      this file
+      has
+      multiple lines
+      
+      
+      and a few blanks
+  
+    ''',
+    'empty-new': '',
+    'exists': '''
+      <<<<<<< ours
+      and has some data in it
+      =======
+      it looks okay
+      and then
+      this:
+        ____   ____   ____  __  __
+       |  _ \ / __ \ / __ \|  \/  |
+       | |_) | |  | | |  | | \  / |
+       |  _ <| |  | | |  | | |\/| |
+       | |_) | |__| | |__| | |  | |
+       |____/ \____/ \____/|_|  |_|
+      
+      creates a conflict
+      that needs resolving
+      to make it okay
+      and to test
+      it happened correctly
+      >>>>>>> theirs
+  
+    ''',
+    'identical': '''
+      identical
+  
+    ''',
+    'new': '''
+      this file
+      has
+      multiple lines
+      
+      
+      and a few blanks
+  
+    ''',
+  })
+# ---

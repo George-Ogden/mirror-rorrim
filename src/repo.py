@@ -1,9 +1,10 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Self
 
 from .config import MirrorRepoConfig
 from .constants import MIRROR_CACHE
+from .diff import Diff
 from .file import MirrorFile
 from .githelper import GitHelper
 from .typed_path import AbsDir, RelDir, RelFile, Remote
@@ -39,3 +40,11 @@ class MirrorRepo:
         for file in self.files:
             if not file.exists_in(self.cache):
                 raise MissingFileError(self.source, file.source)
+
+    def diffs(self) -> Iterable[Diff]:
+        for file in self.files:
+            yield Diff.new_file(self.cache, file)
+
+    def update_all(self, target: AbsDir) -> None:
+        for diff in self.diffs():
+            diff.apply(target)
