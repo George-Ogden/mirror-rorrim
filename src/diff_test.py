@@ -45,7 +45,7 @@ def test_diff_apply(
     diff = Diff.new_file(remote, filepath)
     tmp_filepath = typed_tmp_path / filepath
     tmp_filepath.path.parent.mkdir(parents=True, exist_ok=True)
-    current_path = test_data_path / RelDir("current") / filepath
+    current_path = test_data_path / RelDir("local") / filepath
     if current_path.exists():
         shutil.copy2(current_path, tmp_filepath)
     # gitpython-developers/GitPython#2085

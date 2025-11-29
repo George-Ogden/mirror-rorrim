@@ -18,20 +18,19 @@ class Diff:
     @classmethod
     def new_file(cls, repo: AbsDir, file: RelFile) -> Self:
         # gitpython-developers/GitPython#2085
-        try:
-            git.Repo(os.fspath(repo)).git.diff("--no-index", "--", os.devnull, os.fspath(file))
-        except git.GitCommandError as e:
-            # Exit code of 1 means patch.
-            if e.status != 1:
-                raise e
-            _header, patch = e.stdout.strip().split("\n", maxsplit=1)
-            return cls(
-                file=file,
-                patch=patch + "\n",
-            )
-        else:
-            # Exit code of 0 means no difference.
-            return cls(file, "")
+        cmd: AutoInterrupt = git.Repo(os.fspath(repo)).git.diff(
+            "--no-index", "--", os.devnull, os.fspath(file), as_process=True
+        )
+        assert cmd.proc is not None
+        assert cmd.proc.stdout is not None
+        _ret_code = cmd.proc.wait()
+        stdout = git.safe_decode(cmd.proc.stdout.read())
+        assert stdout is not None
+        _header, patch = stdout.split("\n", maxsplit=1)
+        return cls(
+            file=file,
+            patch=patch,
+        )
 
     def apply(self, local: AbsDir) -> None:
         # gitpython-developers/GitPython#2085
