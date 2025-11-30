@@ -1,4 +1,4 @@
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Sequence
 import os
 import shutil
 import tempfile
@@ -11,8 +11,9 @@ from syrupy.assertion import SnapshotAssertion
 
 from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
+from .state import MirrorRepoState
 from .test_utils import add_commit, quick_mirror_repo
-from .typed_path import AbsDir, RelDir, RelFile
+from .typed_path import AbsDir, RelDir, RelFile, Remote
 
 
 @pytest.fixture
@@ -149,3 +150,38 @@ def test_update_all(
                 repo_contents[filename] = f.read()
         break
     assert repo_contents == snapshot
+
+
+def quick_repo_state(source: str, commit: str, files: Sequence[str]) -> MirrorRepoState:
+    return MirrorRepoState(Remote(source), commit, [RelFile(file) for file in files])
+
+
+def local_repo_state_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
+    repo_dir = tempfile.mkdtemp()
+    add_commit(repo_dir, dict(file1="file1", file2="file2", file3="file3"))
+    commit = git.Repo(repo_dir).git.log(n=1, format="%H")
+    return quick_mirror_repo(repo_dir, ["file1", ("file2", "file3")]), quick_repo_state(
+        repo_dir, snapshot(commit), ["file1", "file2"]
+    )
+
+
+@pytest.mark.parametrize(
+    "repo, expected_state",
+    [
+        (
+            quick_mirror_repo(
+                "https://github.com/George-Ogden/concurrent-language",
+                [("Grammar.g4", "grammar.antlr"), "Makefile"],
+            ),
+            quick_repo_state(
+                "https://github.com/George-Ogden/concurrent-language",
+                "3d47e3072dbdaf9137ea817d8be1f9639dd375de",
+                ["Grammar.g4", "Makefile"],
+            ),
+        ),
+        local_repo_state_test_case(),
+    ],
+)
+def test_repo_state(repo: MirrorRepo, expected_state: MirrorRepoState) -> None:
+    repo.checkout()
+    assert repo.state == expected_state

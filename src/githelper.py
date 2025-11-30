@@ -34,3 +34,9 @@ class GitHelper:
         repo = git.Repo(os.fspath(local))
         [fetch_info] = repo.remote().fetch()
         repo.head.reset(fetch_info.commit, working_tree=True, index=True)
+
+    @classmethod
+    def commit(cls, local: AbsDir) -> str:
+        # gitpython-developers/GitPython#2085
+        repo = git.Repo(os.fspath(local))
+        return repo.head.commit.hexsha

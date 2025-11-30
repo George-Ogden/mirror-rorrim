@@ -7,6 +7,7 @@ from .constants import MIRROR_CACHE
 from .diff import Diff
 from .file import MirrorFile
 from .githelper import GitHelper
+from .state import MirrorRepoState
 from .typed_path import AbsDir, RelDir, RelFile, Remote
 
 
@@ -48,3 +49,13 @@ class MirrorRepo:
     def update(self, target: AbsDir) -> None:
         for diff in self.diffs():
             diff.apply(target)
+
+    @property
+    def state(self) -> MirrorRepoState:
+        return MirrorRepoState(
+            source=self.source, commit=self.commit, files=[file.source for file in self.files]
+        )
+
+    @property
+    def commit(self) -> str:
+        return GitHelper.commit(self.cache)
