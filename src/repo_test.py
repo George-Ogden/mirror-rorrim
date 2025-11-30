@@ -64,15 +64,16 @@ def checkout_not_a_git_repo_test_case() -> tuple[Callable[[], MirrorRepo], None]
 @pytest.mark.parametrize(
     "setup_repo, error",
     [
-        (
+        pytest.param(
             lambda: quick_mirror_repo(
                 "https://github.com/George-Ogden/actions/",
                 ["version.txt"],
             ),
             None,
+            marks=[pytest.mark.slow],
         ),
         checkout_with_missing_file_test_case(),
-        checkout_not_behind_repository_test_case(),
+        pytest.param(*checkout_not_behind_repository_test_case(), marks=[pytest.mark.slow]),
         checkout_not_a_git_repo_test_case(),
     ],
 )

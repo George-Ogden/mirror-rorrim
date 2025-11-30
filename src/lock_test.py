@@ -189,6 +189,7 @@ def follower_process(
     queue.put((idx, data))
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("num_followers", [1, 2, 4])
 @pytest.mark.parametrize("release_early", [True, False])

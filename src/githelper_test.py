@@ -19,15 +19,17 @@ def local_remote_clone_test_case() -> tuple[str, list[str]]:
 @pytest.mark.parametrize(
     "remote, expected_files",
     [
-        (
+        pytest.param(
             # HTTPS remote
             "https://github.com/George-Ogden/dbg",
             ["_debug/__init__.py", "debug/__init__.py"],
+            marks=[pytest.mark.slow],
         ),
-        (
+        pytest.param(
             # SSH remote
             "git@github.com:George-Ogden/pytest-dbg.git",
             ["src/plugin.py"],
+            marks=[pytest.mark.slow],
         ),
         local_remote_clone_test_case(),
     ],
