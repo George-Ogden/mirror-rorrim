@@ -3,6 +3,8 @@ from __future__ import annotations
 import contextlib
 from dataclasses import dataclass
 import fcntl
+import os
+import time
 from typing import TYPE_CHECKING, Protocol, Self
 
 from .typed_path import AbsFile, PyFile
@@ -40,8 +42,6 @@ class FileSystemLock:
         return cls(file)
 
     def release(self) -> None:
-        with contextlib.suppress(OSError, ValueError):  # may already be unlocked
-            fcntl.flock(self.file, fcntl.LOCK_UN)
         self.file.close()
 
     def unlock(self, state: WriteableState) -> None:
@@ -49,3 +49,62 @@ class FileSystemLock:
             state.dump(self.file)
         finally:
             self.release()
+
+
+@dataclass(frozen=True)
+class FileSystemSemaphore:
+    semaphore: PyFile
+    leader: bool
+    key: str
+
+    def __del__(self) -> None:
+        self.release()
+
+    @classmethod
+    def acquire(cls, filepath: AbsFile) -> Self:
+        file = open(filepath, "a+")  # noqa: SIM115
+        try:
+            fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            cls.write_key(file)
+        except OSError:
+            leader = False
+        else:
+            leader = True
+        fcntl.flock(file, fcntl.LOCK_SH)
+        time = cls.read_key(file)
+        return cls(file, leader, time)
+
+    @classmethod
+    def write_key(cls, file: PyFile) -> None:
+        file.seek(0)
+        file.write(str(time.time_ns()))
+        file.truncate()
+        file.flush()
+        os.fsync(file.fileno())
+
+    @classmethod
+    def read_key(cls, file: PyFile) -> str:
+        file.seek(0)
+        return file.read()
+
+    def synchronize(self, monitor: AbsFile) -> None:
+        if self.leader:
+            self.notify(monitor)
+        else:
+            self.wait(monitor)
+
+    def notify(self, monitor: AbsFile) -> None:
+        with open(monitor, "w") as f:
+            f.write(self.key)
+            f.flush()
+            os.fsync(f.fileno())
+
+    def wait(self, monitor: AbsFile) -> None:
+        while True:
+            with contextlib.suppress(OSError), open(monitor) as f:
+                if f.read() == self.key:
+                    return
+            time.sleep(0.01)
+
+    def release(self) -> None:
+        self.semaphore.close()

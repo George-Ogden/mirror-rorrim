@@ -2,15 +2,29 @@ from __future__ import annotations
 
 import contextlib
 import filecmp
+from multiprocessing import Process, Queue
+import random
+import time
 from typing import TYPE_CHECKING, Self
 
 import pytest
 
-from .lock import FileSystemLock
+from .constants import MIRROR_LOCK, MIRROR_SEMAPHORE_EXTENSION
+from .lock import FileSystemLock, FileSystemSemaphore
 from .typed_path import AbsDir, AbsFile, PyFile, RelDir, RelFile
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite
+
+
+@pytest.fixture
+def tmp_lock_path(typed_tmp_path: AbsDir) -> AbsFile:
+    return typed_tmp_path / MIRROR_LOCK
+
+
+@pytest.fixture
+def tmp_extra_lock_path(typed_tmp_path: AbsDir) -> AbsFile:
+    return typed_tmp_path / (MIRROR_LOCK + MIRROR_SEMAPHORE_EXTENSION)
 
 
 @pytest.fixture
@@ -114,3 +128,102 @@ def test_create_new_file_created_in_race(tmp_lock_path: AbsFile) -> None:
 
     with pytest.raises(FileExistsError):
         MockFileSystemLock.create(tmp_lock_path)
+
+
+@pytest.mark.typed
+def test_file_system_semaphore_single_process(
+    tmp_lock_path: AbsFile, tmp_extra_lock_path: AbsFile
+) -> None:
+    lock = FileSystemSemaphore.acquire(tmp_lock_path)
+    lock.synchronize(tmp_extra_lock_path)
+    lock.release()
+
+
+@pytest.mark.typed
+def test_file_system_semaphore_single_process_repeated(
+    tmp_lock_path: AbsFile, tmp_extra_lock_path: AbsFile
+) -> None:
+    for _ in range(2):
+        lock = FileSystemSemaphore.acquire(tmp_lock_path)
+        lock.synchronize(tmp_extra_lock_path)
+        lock.release()
+
+
+@pytest.mark.parametrize("release_instruction_position", range(3))
+def test_file_system_semaphore_single_process_interleaved(
+    tmp_lock_path: AbsFile, tmp_extra_lock_path: AbsFile, release_instruction_position: int
+) -> None:
+    leader_lock = FileSystemSemaphore.acquire(tmp_lock_path)
+    follower_lock = FileSystemSemaphore.acquire(tmp_lock_path)
+    leader_lock.synchronize(tmp_extra_lock_path)
+    if release_instruction_position == 0:
+        leader_lock.release()
+    follower_lock.synchronize(tmp_extra_lock_path)
+    if release_instruction_position == 1:
+        leader_lock.release()
+    follower_lock.release()
+    if release_instruction_position == 3:
+        leader_lock.release()
+
+
+def follower_process(
+    semaphore_path: AbsFile,
+    monitor_path: AbsFile,
+    data_path: AbsFile,
+    queue: Queue[tuple[int, str]],
+    idx: int,
+) -> None:
+    print(f"{idx}: pre-acquire")
+    lock = FileSystemSemaphore.acquire(semaphore_path)
+    print(f"{idx}: post-acquire")
+    time.sleep(random.random())
+    print(f"{idx}: pre-sync")
+    lock.synchronize(monitor_path)
+    print(f"{idx}: post-sync")
+    with open(data_path) as f:
+        data = f.read()
+    time.sleep(random.random())
+    print(f"{idx}: pre-release")
+    lock.release()
+    print(f"{idx}: post-release")
+    queue.put((idx, data))
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("num_followers", [1, 2, 4])
+@pytest.mark.parametrize("release_early", [True, False])
+def test_file_system_semaphore_multiple_processes(
+    typed_tmp_path: AbsDir,
+    tmp_lock_path: AbsFile,
+    tmp_extra_lock_path: AbsFile,
+    seed: int,
+    num_followers: int,
+    release_early: bool,
+) -> None:
+    random.seed(seed)
+    data_path = typed_tmp_path / RelFile("data")
+    queue: Queue[tuple[int, str]] = Queue()
+    followers = [
+        Process(
+            target=follower_process,
+            args=(tmp_lock_path, tmp_extra_lock_path, data_path, queue, idx),
+        )
+        for idx in range(num_followers)
+    ]
+    with open(tmp_lock_path, "x"), open(tmp_extra_lock_path, "x"):
+        ...
+    leader_lock = FileSystemSemaphore.acquire(tmp_lock_path)
+    for follower in followers:
+        follower.start()
+    time.sleep(random.random())
+    with open(data_path, "x") as f:
+        f.write("data")
+    leader_lock.synchronize(tmp_extra_lock_path)
+    if release_early:
+        time.sleep(random.random())
+        leader_lock.release()
+    for follower in followers:
+        follower.join(2.0)
+
+    result = dict(queue.get_nowait() for _ in range(num_followers))
+    assert result == {idx: "data" for idx in range(num_followers)}

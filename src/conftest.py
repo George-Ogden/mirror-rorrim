@@ -8,7 +8,6 @@ from syrupy.extensions.amber import AmberSnapshotExtension
 from syrupy.location import PyTestLocation
 from syrupy.types import SnapshotIndex
 
-from .constants import MIRROR_LOCK
 from .typed_path import AbsDir, AbsFile, RelDir, RelFile
 
 
@@ -27,11 +26,6 @@ def local_git_repo(typed_tmp_path: AbsDir) -> AbsDir:
     # gitpython-developers/GitPython#2085
     git.Repo.init(os.fspath(typed_tmp_path))
     return typed_tmp_path
-
-
-@pytest.fixture
-def tmp_lock_path(typed_tmp_path: AbsDir) -> AbsFile:
-    return typed_tmp_path / MIRROR_LOCK
 
 
 class DifferentNameExtension(AmberSnapshotExtension):
