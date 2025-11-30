@@ -20,7 +20,7 @@ class Diff:
     def new_file(cls, repo: AbsDir, file: MirrorFile) -> Self:
         # gitpython-developers/GitPython#2085
         cmd: AutoInterrupt = git.Repo(os.fspath(repo)).git.diff(
-            "--no-index", "--", os.devnull, os.fspath(file.source), as_process=True
+            "--no-index", "--full-index", "--", os.devnull, os.fspath(file.source), as_process=True
         )
         assert cmd.proc is not None
         assert cmd.proc.stdout is not None
