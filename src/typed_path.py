@@ -42,11 +42,15 @@ class TypedPath:
 
 
 @dataclass(frozen=True, slots=True, init=False)
-class RelFile(TypedPath): ...
+class RelFile(TypedPath):
+    def __add__(self, extension: Ext) -> RelFile:
+        return RelFile(f"{self.path}{extension.extension}")
 
 
 @dataclass(frozen=True, slots=True, init=False)
-class AbsFile(TypedPath): ...
+class AbsFile(TypedPath):
+    def __add__(self, extension: Ext) -> AbsFile:
+        return AbsFile(f"{self.path}{extension.extension}")
 
 
 @dataclass(frozen=True, slots=True, init=False)
@@ -106,6 +110,11 @@ class Remote:
         return hashlib.blake2b(
             bytes(self.canonical, encoding="utf-8", errors="ignore"), usedforsecurity=False
         ).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class Ext:
+    extension: str
 
 
 type PyFile = io.TextIOWrapper

@@ -6,7 +6,7 @@ from typing import Literal
 
 import pytest
 
-from .typed_path import AbsDir, AbsFile, RelDir, RelFile, Remote, TypedPath
+from .typed_path import AbsDir, AbsFile, Ext, RelDir, RelFile, Remote, TypedPath
 
 PATH_TYPES: Sequence[type[TypedPath]] = [RelFile, AbsFile, RelDir, AbsDir]
 
@@ -123,3 +123,21 @@ def test_remote_hash(a: str, b: str, same: bool) -> None:
     for name in a, b:
         pattern = r"^[a-z0-9]{1,200}$"
         assert re.match(pattern, Remote(name).hash, re.IGNORECASE)
+
+
+@pytest.mark.parametrize("path_type", PATH_TYPES)
+@pytest.mark.parametrize("path", ["basic.txt", "folder/.git/file_or_folder"])
+@pytest.mark.parametrize("extension", [".tmp", ".bkp"])
+def test_path_add(
+    path_type: type[TypedPath],
+    path: str,
+    extension: str,
+) -> None:
+    file_types = {AbsFile, RelFile}
+    left = path_type(path)
+    right = Ext(extension)
+    if path_type in file_types:
+        assert left + right == path_type(path + extension)  # type: ignore [operator]
+    else:
+        with pytest.raises(TypeError):
+            left + right  # type: ignore [operator]
