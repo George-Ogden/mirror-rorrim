@@ -1,16 +1,54 @@
 from dataclasses import dataclass
+import functools
 
-from .constants import MIRROR_FILE
+from .config import MirrorConfig
+from .config_parser import Parser
+from .constants import MIRROR_FILE, MIRROR_LOCK
 from .file import MirrorFile
+from .lock import FileSystemLock, WriteableState
+from .mirror import Mirror
 from .repo import MirrorRepo
-from .typed_path import AbsDir, RelFile, Remote
+from .state import State
+from .typed_path import AbsDir, AbsFile, RelFile, Remote
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Installer:
     target: AbsDir
     source_remote: Remote | None
     source_path: RelFile
+
+    def install(self) -> None:
+        lock = self.lock()
+        state = self._install()
+        lock.unlock(state)
+
+    def lock(self) -> FileSystemLock:
+        return FileSystemLock.create(self.lock_file)
+
+    @property
+    def lock_file(self) -> AbsFile:
+        return self.target / MIRROR_LOCK
+
+    def _install(self) -> WriteableState:
+        self.checkout_all()
+        self.update_all()
+        return State()
+
+    def checkout_all(self) -> None:
+        self.mirror.checkout_all()
+
+    @functools.cached_property
+    def mirror(self) -> Mirror:
+        return Mirror.from_config(self.load_config())
+
+    def load_config(self) -> MirrorConfig:
+        if self.source_repo is None:
+            config = Parser.parse_file(self.source_path)
+        else:
+            [file] = self.source_repo.files
+            config = Parser.parse_file(self.source_repo.cache / file.source)
+        return config
 
     @property
     def source_repo(self) -> MirrorRepo | None:
@@ -20,5 +58,10 @@ class Installer:
             source=self.source_remote,
             files=[MirrorFile(source=self.source_path, target=MIRROR_FILE)],
         )
-        # missing checkout
+        mirror_repo.checkout()
         return mirror_repo
+
+    def update_all(self) -> None:
+        if self.source_repo is not None:
+            self.source_repo.update(self.target)
+        self.mirror.update_all(self.target)

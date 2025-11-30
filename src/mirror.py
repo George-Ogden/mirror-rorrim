@@ -1,9 +1,10 @@
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from typing import Self
 
 from .config import MirrorConfig
 from .repo import MirrorRepo
+from .typed_path import AbsDir
 
 
 @dataclass(frozen=True)
@@ -13,3 +14,14 @@ class Mirror:
     @classmethod
     def from_config(cls, config: MirrorConfig) -> Self:
         return cls([MirrorRepo.from_config(sub_config) for sub_config in config.repos])
+
+    def __iter__(self) -> Iterator[MirrorRepo]:
+        return iter(self.repos)
+
+    def checkout_all(self) -> None:
+        for repo in self:
+            repo.checkout()
+
+    def update_all(self, target: AbsDir) -> None:
+        for repo in self:
+            repo.update(target)

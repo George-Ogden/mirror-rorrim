@@ -45,6 +45,6 @@ class MirrorRepo:
         for file in self.files:
             yield Diff.new_file(self.cache, file)
 
-    def update_all(self, target: AbsDir) -> None:
+    def update(self, target: AbsDir) -> None:
         for diff in self.diffs():
             diff.apply(target)

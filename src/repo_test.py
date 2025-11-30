@@ -139,7 +139,7 @@ def test_update_all(
     # gitpython-developers/GitPython#2085
     git.Repo.init(os.fspath(repo.cache))
     shutil.copytree(test_data_path / RelDir("remote"), repo.cache, dirs_exist_ok=True)
-    repo.update_all(local_git_repo)
+    repo.update(local_git_repo)
 
     repo_contents = {}
     for _, _, filenames in local_git_repo.path.walk():

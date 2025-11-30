@@ -5,6 +5,7 @@ from typing import Any
 
 import git
 
+from .constants import MIRROR_FILE
 from .file import MirrorFile
 from .installer import Installer
 from .mirror import Mirror
@@ -12,11 +13,14 @@ from .repo import MirrorRepo
 from .typed_path import AbsDir, RelFile, Remote
 
 
-def quick_installer(source_remote: str | None, source_path: str | RelFile) -> Installer:
+def quick_installer(
+    target: None | AbsDir, remote: tuple[str | None, str | RelFile] | None
+) -> Installer:
+    source_remote, source_path = remote or (None, MIRROR_FILE)
     return Installer(
         source_remote=None if source_remote is None else Remote(source_remote),
         source_path=RelFile(source_path),
-        target=AbsDir.cwd(),
+        target=target or AbsDir.cwd(),
     )
 
 

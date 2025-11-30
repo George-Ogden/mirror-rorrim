@@ -1,9 +1,20 @@
-import pytest
+import contextlib
+import os
+import shutil
+from unittest import mock
 
-from .constants import MIRROR_FILE
+import pytest
+from syrupy.assertion import SnapshotAssertion
+
+from .constants import MIRROR_FILE, MIRROR_LOCK
 from .repo import MirrorRepo
 from .test_utils import quick_installer, quick_mirror_repo
-from .typed_path import RelFile
+from .typed_path import AbsDir, RelDir, RelFile
+
+
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path / RelDir("installer_tests")
 
 
 @pytest.mark.parametrize(
@@ -24,5 +35,49 @@ from .typed_path import RelFile
 def test_installer_source_repo(
     source_remote: str | None, source_path: str | RelFile, expected_repo: MirrorRepo | None
 ) -> None:
-    installer = quick_installer(source_remote, source_path)
-    assert installer.source_repo == expected_repo
+    installer = quick_installer(None, (source_remote, source_path))
+    with mock.patch.object(MirrorRepo, "checkout", mock.Mock(return_value=None)):
+        assert installer.source_repo == expected_repo
+
+
+@pytest.mark.parametrize(
+    "test_name, source",
+    [
+        ("empty_repo_with_config", None),
+        ("repo_with_multiple_configs", (None, "config.yaml")),
+        (
+            "remote_only",
+            ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
+        ),
+        (
+            "remote_config_overwrite",
+            ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
+        ),
+    ],
+)
+def test_installer_install(
+    test_name: str,
+    source: tuple[None | str, str] | None,
+    local_git_repo: AbsDir,
+    test_data_path: AbsDir,
+    snapshot: SnapshotAssertion,
+) -> None:
+    installer = quick_installer(local_git_repo, source)
+    with contextlib.suppress(FileNotFoundError):
+        shutil.copytree(test_data_path / RelDir(test_name), local_git_repo, dirs_exist_ok=True)
+    if installer.source_remote is None:
+        object.__setattr__(installer, "source_path", local_git_repo / installer.source_path)
+    installer.install()
+
+    repo_contents = {}
+    for folder, _, filenames in local_git_repo.path.walk():
+        if ".git" in os.fspath(folder):
+            continue
+        for filename in filenames:
+            filepath = RelDir(folder) / RelFile(filename)
+            if RelFile(filename) == MIRROR_LOCK:
+                assert os.path.getsize(filepath) > 0
+                continue
+            with open(filepath) as f:
+                repo_contents[os.fspath((folder / filename).relative_to(local_git_repo))] = f.read()
+    assert repo_contents == snapshot

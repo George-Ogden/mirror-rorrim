@@ -1,0 +1,5 @@
+repos:
+  - source: https://github.com/George-Ogden/dbg
+    files:
+      - debug_init.py: debug/__init__.py
+      - _debug_init.py: _debug/__init__.py
