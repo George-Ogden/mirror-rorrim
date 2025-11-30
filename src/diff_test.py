@@ -30,6 +30,7 @@ def test_name(file: MirrorFile) -> str:
         quick_mirror_file("conflict"),
         quick_mirror_file("new", "rename"),
         quick_mirror_file("empty", "new-empty"),
+        quick_mirror_file("new", "nested/folder/new"),
     ],
 )
 def test_diff_apply(
