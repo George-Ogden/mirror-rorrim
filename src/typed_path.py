@@ -32,6 +32,7 @@ class TypedPath:
 
     @property
     def canonical(self) -> str:
+        # pathlib.Path.resolve uses the filesystem, which could have unwanted links.
         return os.path.normpath(self)
 
     def __fspath__(self) -> str:

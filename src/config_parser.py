@@ -1,4 +1,5 @@
 from collections.abc import Callable, Collection
+import contextlib
 from dataclasses import dataclass, field
 import difflib
 import functools
@@ -6,10 +7,13 @@ import inspect
 import os.path
 from typing import Any, NoReturn, cast
 
+import git
+from git import Repo as GitRepo
 import yaml
 from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
+from .githelper import GitHelper
 from .typed_path import AbsFile, RelFile, Remote, TypedPath
 
 
@@ -152,7 +156,10 @@ class Parser:
 
     def _relfile_from_scalar_node(self, node: ScalarNode) -> RelFile:
         file = RelFile(node.value)
-        # pathlib.Path.resolve uses the filesystem, which could have unwanted links.
+        if file.path.is_absolute():
+            self.fail(
+                f"the filename {node.value!r} is an absolute filepath, please use a relative filepath."
+            )
         normpath = file.canonical
         if normpath.startswith(".."):
             self.fail(
@@ -220,10 +227,14 @@ class Parser:
     def parse_remote(self, node: Node) -> Remote:
         match node:
             case ScalarNode() if isinstance(node.value, str):
-                if os.path.normpath(node.value) == ".":
-                    self.fail(
-                        f"remote {node.value!r} points to the same repository, which is not allowed."
-                    )
+                with contextlib.suppress(git.GitError):
+                    if os.path.samefile(
+                        cast(GitRepo, GitHelper.repo(node.value)).working_dir,
+                        os.path.realpath(node.value),
+                    ):
+                        self.fail(
+                            f"remote {node.value!r} points to the same repository, which is not allowed."
+                        )
                 remote = Remote(node.value)
                 self._check_duplicate_remote(remote, node)
                 return remote

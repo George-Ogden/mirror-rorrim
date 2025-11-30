@@ -128,6 +128,20 @@ def _test_parse_body(
                 "An unexpected error occurred during parsing @ <string>:1:1: the filename '.' points to the root of the repository and is therefore not valid."
             ),
         ),
+        (
+            # source absfile
+            "'/source': './target'",
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:1: the filename '/source' is an absolute filepath, please use a relative filepath."
+            ),
+        ),
+        (
+            # target absfile
+            "'./source': '/target'",
+            snapshot(
+                "An unexpected error occurred during parsing @ <string>:1:13: the filename '/target' is an absolute filepath, please use a relative filepath."
+            ),
+        ),
     ],
 )
 def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) -> None:
