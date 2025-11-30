@@ -75,6 +75,9 @@ class RelDir(TypedPath):
                 raise TypeError()
         return self._join(other, ret_type)
 
+    def __add__(self, extension: Ext) -> RelFile:
+        return RelFile(f"{self.path}{extension.extension}")
+
 
 @dataclass(frozen=True, slots=True, init=False)
 class AbsDir(TypedPath):
@@ -91,6 +94,9 @@ class AbsDir(TypedPath):
             case _:
                 raise TypeError()
         return self._join(other, ret_type)
+
+    def __add__(self, extension: Ext) -> AbsFile:
+        return AbsFile(f"{self.path}{extension.extension}")
 
     @classmethod
     def cwd(cls) -> Self:

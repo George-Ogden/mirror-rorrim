@@ -133,11 +133,8 @@ def test_path_add(
     path: str,
     extension: str,
 ) -> None:
-    file_types = {AbsFile, RelFile}
-    left = path_type(path)
+    file_types = {AbsFile: AbsFile, RelFile: RelFile, AbsDir: AbsFile, RelDir: RelFile}
+    expected = file_types[path_type]
+    left = _make_path(path_type, path)
     right = Ext(extension)
-    if path_type in file_types:
-        assert left + right == path_type(path + extension)  # type: ignore [operator]
-    else:
-        with pytest.raises(TypeError):
-            left + right  # type: ignore [operator]
+    assert left + right == _make_path(expected, path + extension)  # type: ignore [operator]
