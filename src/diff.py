@@ -1,13 +1,12 @@
 import contextlib
 from dataclasses import dataclass
 import os
-from subprocess import PIPE
 from typing import Self
 
 import git
-from git.cmd import _AutoInterrupt as AutoInterrupt
 
 from .file import MirrorFile
+from .githelper import GitHelper
 from .typed_path import AbsDir
 
 
@@ -18,15 +17,8 @@ class Diff:
 
     @classmethod
     def new_file(cls, repo: AbsDir, file: MirrorFile) -> Self:
-        # gitpython-developers/GitPython#2085
-        cmd: AutoInterrupt = git.Repo(os.fspath(repo)).git.diff(
-            "--no-index", "--full-index", "--", os.devnull, os.fspath(file.source), as_process=True
-        )
-        assert cmd.proc is not None
-        assert cmd.proc.stdout is not None
-        _ret_code = cmd.proc.wait()
-        stdout: str = git.safe_decode(cmd.proc.stdout.read())
-        _header, *patch_lines = stdout.splitlines(keepends=True)
+        patch = GitHelper.fresh_diff(repo, file.source)
+        _header, *patch_lines = patch.splitlines(keepends=True)
         cls.update_patch_lines(patch_lines, file)
         return cls(
             file=file,
@@ -67,15 +59,6 @@ class Diff:
 
     def apply(self, local: AbsDir) -> None:
         # gitpython-developers/GitPython#2085
-        repo = git.Repo(os.fspath(local))
         with contextlib.suppress(git.GitCommandError):
-            # repo.index.add is not syncing
-            repo.git.add(os.fspath(self.file.target))
-        cmd: AutoInterrupt = repo.git.apply(
-            "--allow-empty", "-3", "-", istream=PIPE, as_process=True
-        )
-        assert cmd.proc is not None
-        assert cmd.proc.stdin is not None
-        cmd.proc.stdin.write(self.patch.encode("utf-8"))
-        cmd.proc.stdin.close()
-        _ret_code = cmd.proc.wait()
+            GitHelper.add(local, self.file.target)
+        GitHelper.apply_patch(local, self.patch)
