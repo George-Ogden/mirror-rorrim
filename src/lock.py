@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 from dataclasses import dataclass
 import fcntl
-import os
 import time
 from typing import TYPE_CHECKING, Protocol, Self
 
@@ -80,7 +79,6 @@ class FileSystemSemaphore:
         file.write(str(time.time_ns()))
         file.truncate()
         file.flush()
-        os.fsync(file.fileno())
 
     @classmethod
     def read_key(cls, file: PyFile) -> str:
@@ -97,7 +95,6 @@ class FileSystemSemaphore:
         with open(monitor, "w") as f:
             f.write(self.key)
             f.flush()
-            os.fsync(f.fileno())
 
     def wait(self, monitor: AbsFile) -> None:
         while True:
