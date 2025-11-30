@@ -5,10 +5,10 @@ from .config import MirrorConfig
 from .config_parser import Parser
 from .constants import MIRROR_FILE, MIRROR_LOCK
 from .file import MirrorFile
+from .githelper import GitHelper
 from .lock import FileSystemLock, WriteableState
 from .mirror import Mirror
 from .repo import MirrorRepo
-from .state import State
 from .typed_path import AbsDir, AbsFile, RelFile, Remote
 
 
@@ -22,6 +22,7 @@ class Installer:
         lock = self.lock()
         state = self._install()
         lock.unlock(state)
+        GitHelper.add(self.target, MIRROR_LOCK)
 
     def lock(self) -> FileSystemLock:
         return FileSystemLock.create(self.lock_file)
@@ -33,7 +34,7 @@ class Installer:
     def _install(self) -> WriteableState:
         self.checkout_all()
         self.update_all()
-        return State()
+        return self.state
 
     def checkout_all(self) -> None:
         self.mirror.checkout_all()
@@ -65,3 +66,7 @@ class Installer:
         if self.source_repo is not None:
             self.source_repo.update(self.target)
         self.mirror.update_all(self.target)
+
+    @property
+    def state(self) -> WriteableState:
+        return self.mirror.state

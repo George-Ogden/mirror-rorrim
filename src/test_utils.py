@@ -46,7 +46,7 @@ def quick_mirror(repos: list[MirrorRepo]) -> Mirror:
     return Mirror(repos)
 
 
-def add_commit(path: AbsDir | str, files: dict[str, Any]) -> None:
+def add_commit(path: AbsDir | str, files: dict[str, Any]) -> str:
     path = AbsDir(path)
     repo = git.Repo.init(path)
 
@@ -66,4 +66,5 @@ def add_commit(path: AbsDir | str, files: dict[str, Any]) -> None:
         num_commits = len(list(repo.iter_commits()))
     except ValueError:
         num_commits = 0
-    repo.index.commit(f"Commit {num_commits + 1}")
+    commit = repo.index.commit(f"Commit {num_commits + 1}")
+    return commit.hexsha

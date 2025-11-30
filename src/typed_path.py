@@ -41,6 +41,11 @@ class TypedPath:
     def __str__(self) -> str:
         return repr(str(self.path))
 
+    def __lt__(self, other: Self) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return os.fspath(self) < os.fspath(other)
+
 
 @dataclass(frozen=True, slots=True, init=False)
 class RelFile(TypedPath):

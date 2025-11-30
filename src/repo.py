@@ -53,7 +53,9 @@ class MirrorRepo:
     @property
     def state(self) -> MirrorRepoState:
         return MirrorRepoState(
-            source=self.source, commit=self.commit, files=[file.source for file in self.files]
+            source=self.source,
+            commit=self.commit,
+            files=sorted({file.source for file in self.files}),
         )
 
     @property

@@ -4,16 +4,10 @@ import contextlib
 from dataclasses import dataclass
 import fcntl
 import time
-from typing import TYPE_CHECKING, Protocol, Self
+from typing import Self
 
+from .state import WriteableState
 from .typed_path import AbsFile, PyFile
-
-if TYPE_CHECKING:
-    from _typeshed import SupportsWrite
-
-
-class WriteableState(Protocol):
-    def dump(self, f: SupportsWrite[str]) -> None: ...
 
 
 @dataclass(frozen=True)

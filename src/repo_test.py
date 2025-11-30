@@ -153,7 +153,7 @@ def test_update_all(
 
 
 def quick_repo_state(source: str, commit: str, files: Sequence[str]) -> MirrorRepoState:
-    return MirrorRepoState(Remote(source), commit, [RelFile(file) for file in files])
+    return MirrorRepoState(Remote(source), commit, sorted(RelFile(file) for file in files))
 
 
 def local_repo_state_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
@@ -162,6 +162,15 @@ def local_repo_state_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
     commit = git.Repo(repo_dir).git.log(n=1, format="%H")
     return quick_mirror_repo(repo_dir, ["file1", ("file2", "file3")]), quick_repo_state(
         repo_dir, snapshot(commit), ["file1", "file2"]
+    )
+
+
+def repeated_file_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
+    repo_dir = tempfile.mkdtemp()
+    add_commit(repo_dir, dict(file1="file1"))
+    commit = git.Repo(repo_dir).git.log(n=1, format="%H")
+    return quick_mirror_repo(repo_dir, ["file1", ("file1", "file2")]), quick_repo_state(
+        repo_dir, snapshot(commit), ["file1"]
     )
 
 
@@ -180,6 +189,7 @@ def local_repo_state_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
             ),
         ),
         local_repo_state_test_case(),
+        repeated_file_test_case(),
     ],
 )
 def test_repo_state(repo: MirrorRepo, expected_state: MirrorRepoState) -> None:

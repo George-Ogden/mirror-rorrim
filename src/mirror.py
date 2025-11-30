@@ -4,6 +4,7 @@ from typing import Self
 
 from .config import MirrorConfig
 from .repo import MirrorRepo
+from .state import MirrorState
 from .typed_path import AbsDir
 
 
@@ -25,3 +26,7 @@ class Mirror:
     def update_all(self, target: AbsDir) -> None:
         for repo in self:
             repo.update(target)
+
+    @property
+    def state(self) -> MirrorState:
+        return MirrorState([repo.state for repo in self.repos])

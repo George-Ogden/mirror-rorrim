@@ -1,0 +1,12 @@
+# serializer version: 1
+# name: test_mirror_state[mirror0-single]
+  '''
+  repos:
+  - commit: b1b9de41ddd9cce6fa0dc5766d9f669548f06082
+    files:
+    - path: pyproject.toml
+    source:
+      repo: https://github.com/George-Ogden/dbg
+  
+  '''
+# ---
