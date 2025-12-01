@@ -596,13 +596,13 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
         (
             "content_error.yaml",
             snapshot(
-                "An unexpected error occurred during parsing @ TEST_DATA/content_error.yaml:7:9: duplicate file 'mirror.yaml'; already used on line 4."
+                "An unexpected error occurred during parsing @ content_error.yaml:7:9: duplicate file 'mirror.yaml'; already used on line 4."
             ),
         ),
         (
             "execution.yaml",
             snapshot(
-                "An unexpected error occurred during parsing @ TEST_DATA/execution.yaml:2:1: mapping key should be one of ['repos'], got 'args'."
+                "An unexpected error occurred during parsing @ execution.yaml:2:1: mapping key should be one of ['repos'], got 'args'."
             ),
         ),
         (

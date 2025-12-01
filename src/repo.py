@@ -21,6 +21,24 @@ class MissingFileError(Exception):
         return f"{self.file} could not be found from {self.source}."
 
 
+@dataclass
+class IsADirectoryError(Exception):
+    source: Remote
+    file: RelFile
+
+    def __str__(self) -> str:
+        return f"{self.file} from {self.source} is a directory."
+
+
+@dataclass
+class IrregularFileError(Exception):
+    source: Remote
+    file: RelFile
+
+    def __str__(self) -> str:
+        return f"{self.file} from {self.source} is not a regular file."
+
+
 @dataclass(frozen=True)
 class MirrorRepo:
     source: Remote
@@ -43,6 +61,10 @@ class MirrorRepo:
         for file in self.files:
             if not file.exists_in(self.cache):
                 raise MissingFileError(self.source, file.source)
+            if file.is_folder_in(self.cache):
+                raise IsADirectoryError(self.source, file.source)
+            if not file.is_file_in(self.cache):
+                raise IrregularFileError(self.source, file.source)
 
     def diffs(self) -> Iterable[Diff]:
         for file in self.files:

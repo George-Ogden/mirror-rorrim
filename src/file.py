@@ -16,4 +16,12 @@ class MirrorFile:
 
     def exists_in(self, folder: AbsDir) -> bool:
         path = folder / self.source
-        return path.exists() and path.is_file()
+        return path.exists()
+
+    def is_file_in(self, folder: AbsDir) -> bool:
+        path = folder / self.source
+        return path.is_file()
+
+    def is_folder_in(self, folder: AbsDir) -> bool:
+        path = folder / self.source
+        return path.is_folder()

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from dataclasses import KW_ONLY, dataclass
 import functools
+import sys
 from types import TracebackType
 
 from loguru import logger
@@ -54,3 +55,27 @@ class describe:  # noqa: N801
                 return fn(*args, **kwargs)
 
         return logging_fn
+
+
+def log_level_name(quiet: int, verbose: int) -> str | int:
+    match verbose - quiet:
+        case -2:
+            return "CRITICAL"
+        case -1:
+            return "ERROR"
+        case 0:
+            return "INFO"
+        case 1:
+            return "DEBUG"
+        case 2:
+            return "TRACE"
+        case n if n < 0:
+            return 0
+        case n if n > 0:
+            return 50
+    raise TypeError()
+
+
+def setup_logger(quiet: int, verbose: int) -> None:
+    logger.remove()
+    logger.add(sys.stdout, level=log_level_name(quiet, verbose), format="<level>{message}</level>")

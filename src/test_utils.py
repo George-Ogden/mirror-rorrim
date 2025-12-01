@@ -33,10 +33,10 @@ def quick_mirror_file(source: str | RelFile, target: RelFile | str | None = None
 
 
 def quick_mirror_repo(
-    source: str, files: list[tuple[str | RelFile, str | RelFile] | str | RelFile]
+    source: str | AbsDir, files: list[tuple[str | RelFile, str | RelFile] | str | RelFile]
 ) -> MirrorRepo:
     return MirrorRepo(
-        source=Remote(source),
+        source=Remote(os.fspath(source)),
         files=[
             quick_mirror_file(*file) if isinstance(file, tuple) else quick_mirror_file(file)
             for file in files

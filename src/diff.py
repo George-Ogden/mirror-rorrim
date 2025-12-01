@@ -63,5 +63,5 @@ class Diff:
         with contextlib.suppress(git.GitCommandError):
             GitHelper.add(local, self.file.target)
         with describe(f"Applying patch from {self.file.source} to {self.file.target}"):
-            logger.debug(f"patch = {self.patch}")
+            logger.trace(f"patch = {self.patch}")
             GitHelper.apply_patch(local, self.patch)

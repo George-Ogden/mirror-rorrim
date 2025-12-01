@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import functools
+import os
 from typing import cast
 
 from .config import MirrorConfig
@@ -23,9 +24,13 @@ class Installer:
 
     def install(self) -> None:
         lock = self.lock()
-        state = self._install()
-        lock.unlock(state)
-        GitHelper.add(self.target, MIRROR_LOCK)
+        try:
+            state = self._install()
+            lock.unlock(state)
+            GitHelper.add(self.target, MIRROR_LOCK)
+        except BaseException as e:
+            os.remove(self.target / MIRROR_LOCK)
+            raise e from e
 
     def lock(self) -> FileSystemLock:
         return FileSystemLock.create(self.lock_file)

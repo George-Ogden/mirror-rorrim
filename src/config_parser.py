@@ -31,7 +31,7 @@ class ParserError(YAMLError):
 
     @property
     def position(self) -> str:
-        position = str(self.context.filename.path)
+        position = str(self.context.filename.path.name)
         if self.context.node.start_mark is not None:
             position = f"{position}:{self.context.node.start_mark.line + 1}:{self.context.node.start_mark.column + 1}"
         return position
