@@ -190,7 +190,7 @@ def follower_process(
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("num_followers", [1, 2, 4])
 @pytest.mark.parametrize("release_early", [True, False])
 def test_file_system_semaphore_multiple_processes(

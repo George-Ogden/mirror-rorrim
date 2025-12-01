@@ -5,7 +5,7 @@ from loguru import logger
 import pytest
 from pytest import LogCaptureFixture  # noqa: PT013
 
-from .logger import describe
+from .logger import describe, log_level_name
 
 
 @pytest.fixture
@@ -166,3 +166,39 @@ def test_logger_wrap_failure_trace(caplog: LogCaptureFixture) -> None:
             """
         ).strip()
     )
+
+
+@pytest.mark.parametrize(
+    "quiet, verbose, level",
+    [
+        # default
+        (0, 0, "info"),
+        # -v
+        (0, 1, "debug"),
+        # -vv
+        (0, 2, "trace"),
+        # -vvv
+        (0, 3, 50),
+        # -vvvv
+        (0, 4, 50),
+        # -q
+        (1, 0, "error"),
+        # -qq
+        (2, 0, "critical"),
+        # -qqq
+        (3, 0, 0),
+        # -qqqq
+        (4, 0, 0),
+        # mixed equally
+        (1, 1, "info"),
+        # mixed verbose
+        (1, 2, "debug"),
+        # mixed quiet
+        (2, 1, "error"),
+    ],
+)
+def test_log_level_name(quiet: int, verbose: int, level: str | int) -> None:
+    if isinstance(level, str):
+        assert log_level_name(quiet, verbose) == level.upper()
+    else:
+        assert log_level_name(quiet, verbose) == level

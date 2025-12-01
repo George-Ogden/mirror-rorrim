@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import functools
+from typing import cast
 
 from .config import MirrorConfig
 from .config_parser import Parser
@@ -12,12 +13,13 @@ from .mirror import Mirror
 from .repo import MirrorRepo
 from .typed_path import AbsDir, AbsFile, RelFile, Remote
 
+type InstallSource = AbsFile | RelFile | tuple[Remote, RelFile]
+
 
 @dataclass(frozen=True)
 class Installer:
     target: AbsDir
-    source_remote: Remote | None
-    source_path: RelFile
+    source: InstallSource
 
     def install(self) -> None:
         lock = self.lock()
@@ -60,10 +62,24 @@ class Installer:
             return None
         mirror_repo = MirrorRepo(
             source=self.source_remote,
-            files=[MirrorFile(source=self.source_path, target=MIRROR_FILE)],
+            files=[MirrorFile(source=cast(RelFile, self.source_path), target=MIRROR_FILE)],
         )
         mirror_repo.checkout()
         return mirror_repo
+
+    @property
+    def source_remote(self) -> Remote | None:
+        match self.source:
+            case [remote, _]:
+                return cast(Remote, remote)
+        return None
+
+    @property
+    def source_path(self) -> RelFile | AbsFile:
+        match self.source:
+            case [_, path]:
+                return cast(RelFile, path)
+        return cast(RelFile | AbsFile, self.source)
 
     @describe("Updating all files", level="INFO")
     def update_all(self) -> None:

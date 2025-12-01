@@ -65,8 +65,8 @@ def test_installer_install(
     installer = quick_installer(local_git_repo, source)
     with contextlib.suppress(FileNotFoundError):
         shutil.copytree(test_data_path / RelDir(test_name), local_git_repo, dirs_exist_ok=True)
-    if installer.source_remote is None:
-        object.__setattr__(installer, "source_path", local_git_repo / installer.source_path)
+    if isinstance(installer.source, RelFile):
+        object.__setattr__(installer, "source", local_git_repo / installer.source)
     installer.install()
 
     repo_contents = {}
