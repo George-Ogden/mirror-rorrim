@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import KW_ONLY, dataclass
 import functools
 from types import TracebackType
 
@@ -11,14 +11,8 @@ from .constants import DONE_SUFFIX, FAILURE_SUFFIX, LOADING_SUFFIX
 @dataclass(frozen=True, slots=True)
 class describe:  # noqa: N801
     message: str
-
-    def __call__[**P, R](self, fn: Callable[P, R]) -> Callable[P, R]:
-        @functools.wraps(fn)
-        def logging_fn(*args: P.args, **kwargs: P.kwargs) -> R:
-            with self:
-                return fn(*args, **kwargs)
-
-        return logging_fn
+    _: KW_ONLY
+    level: str = "TRACE"
 
     @property
     def start_message(self) -> str:
@@ -32,8 +26,11 @@ class describe:  # noqa: N801
     def failed_message(self) -> str:
         return f"{self.message} {FAILURE_SUFFIX}"
 
+    def log(self, message: str, /) -> None:
+        logger.log(self.level, message)
+
     def __enter__(self) -> None:
-        logger.trace(self.start_message)
+        self.log(self.start_message)
 
     def __exit__(
         self,
@@ -42,6 +39,14 @@ class describe:  # noqa: N801
         traceback: TracebackType | None,
     ) -> None:
         if type_ is None:
-            logger.trace(self.done_message)
+            self.log(self.done_message)
         else:
             logger.error(self.failed_message)
+
+    def __call__[**P, R](self, fn: Callable[P, R]) -> Callable[P, R]:
+        @functools.wraps(fn)
+        def logging_fn(*args: P.args, **kwargs: P.kwargs) -> R:
+            with self:
+                return fn(*args, **kwargs)
+
+        return logging_fn
