@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
+import sys
 
 import git
+from loguru import logger
 import pytest
 from syrupy.assertion import SnapshotAssertion
 from syrupy.extensions.amber import AmberSnapshotExtension
@@ -42,3 +44,9 @@ def snapshot(
 ) -> SnapshotAssertion:
     DifferentNameExtension.location = test_data_path / RelDir("snapshots") / RelFile(test_name)
     return snapshot.use_extension(DifferentNameExtension)
+
+
+@pytest.fixture(autouse=True)
+def log_everything() -> None:
+    logger.remove()
+    logger.add(sys.stderr, level="TRACE")
