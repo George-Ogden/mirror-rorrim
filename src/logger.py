@@ -13,6 +13,7 @@ class describe:  # noqa: N801
     message: str
     _: KW_ONLY
     level: str = "TRACE"
+    error_level: str = "ERROR"
 
     @property
     def start_message(self) -> str:
@@ -29,6 +30,9 @@ class describe:  # noqa: N801
     def log(self, message: str, /) -> None:
         logger.log(self.level, message)
 
+    def error_log(self, message: str, /) -> None:
+        logger.log(self.error_level, message)
+
     def __enter__(self) -> None:
         self.log(self.start_message)
 
@@ -41,7 +45,7 @@ class describe:  # noqa: N801
         if type_ is None:
             self.log(self.done_message)
         else:
-            logger.error(self.failed_message)
+            self.error_log(self.failed_message)
 
     def __call__[**P, R](self, fn: Callable[P, R]) -> Callable[P, R]:
         @functools.wraps(fn)

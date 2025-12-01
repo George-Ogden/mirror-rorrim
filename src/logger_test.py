@@ -1,3 +1,4 @@
+import contextlib
 import textwrap
 
 from loguru import logger
@@ -82,6 +83,45 @@ def test_logger_context_manager_level(caplog: LogCaptureFixture) -> None:
             error test ...
             working
             error test [done]
+            """
+        ).strip()
+    )
+
+
+# Override log level for this test.
+@pytest.mark.parametrize("log_level", ["INFO"])
+def test_logger_context_manager_error_level(caplog: LogCaptureFixture) -> None:
+    def log() -> None:
+        logger.info("failing")
+        raise RuntimeError()
+
+    with (
+        contextlib.suppress(RuntimeError),
+        describe("error test", level="INFO", error_level="ERROR"),
+    ):
+        log()
+    with (
+        contextlib.suppress(RuntimeError),
+        describe("debug test", level="ERROR", error_level="DEBUG"),
+    ):
+        log()
+    with (
+        contextlib.suppress(RuntimeError),
+        describe("trace test", level="DEBUG", error_level="INFO"),
+    ):
+        log()
+
+    assert (
+        caplog.text.strip()
+        == textwrap.dedent(
+            """
+            error test ...
+            failing
+            error test [failed]
+            debug test ...
+            failing
+            failing
+            trace test [failed]
             """
         ).strip()
     )
