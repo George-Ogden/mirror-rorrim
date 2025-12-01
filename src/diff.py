@@ -4,9 +4,11 @@ import os
 from typing import Self
 
 import git
+from loguru import logger
 
 from .file import MirrorFile
 from .githelper import GitHelper
+from .logger import describe
 from .typed_path import AbsDir
 
 
@@ -58,7 +60,8 @@ class Diff:
         return f"--- {os.devnull}\n"
 
     def apply(self, local: AbsDir) -> None:
-        # gitpython-developers/GitPython#2085
         with contextlib.suppress(git.GitCommandError):
             GitHelper.add(local, self.file.target)
-        GitHelper.apply_patch(local, self.patch)
+        with describe(f"Applying patch from {self.file.source} to {self.file.target}"):
+            logger.debug(f"patch = {self.patch}")
+            GitHelper.apply_patch(local, self.patch)

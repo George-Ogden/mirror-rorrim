@@ -7,6 +7,7 @@ from .constants import MIRROR_FILE, MIRROR_LOCK
 from .file import MirrorFile
 from .githelper import GitHelper
 from .lock import FileSystemLock, WriteableState
+from .logger import describe
 from .mirror import Mirror
 from .repo import MirrorRepo
 from .typed_path import AbsDir, AbsFile, RelFile, Remote
@@ -36,6 +37,7 @@ class Installer:
         self.update_all()
         return self.state
 
+    @describe("Syncing all repos", level="INFO")
     def checkout_all(self) -> None:
         self.mirror.checkout_all()
 
@@ -47,7 +49,8 @@ class Installer:
         if self.source_repo is None:
             config = Parser.parse_file(self.source_path)
         else:
-            [file] = self.source_repo.files
+            with describe("Fetching config"):
+                [file] = self.source_repo.files
             config = Parser.parse_file(self.source_repo.cache / file.source)
         return config
 
@@ -62,6 +65,7 @@ class Installer:
         mirror_repo.checkout()
         return mirror_repo
 
+    @describe("Updating all files", level="INFO")
     def update_all(self) -> None:
         if self.source_repo is not None:
             self.source_repo.update(self.target)

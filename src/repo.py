@@ -7,6 +7,7 @@ from .constants import MIRROR_CACHE
 from .diff import Diff
 from .file import MirrorFile
 from .githelper import GitHelper
+from .logger import describe
 from .state import MirrorRepoState
 from .typed_path import AbsDir, RelDir, RelFile, Remote
 
@@ -34,7 +35,8 @@ class MirrorRepo:
         return MIRROR_CACHE / RelDir(self.source.hash)
 
     def checkout(self) -> None:
-        GitHelper.checkout(self.source, self.cache)
+        with describe(f"Syncing {self.source}", level="DEBUG"):
+            GitHelper.checkout(self.source, self.cache)
         self.verify_all_files_exist()
 
     def verify_all_files_exist(self) -> None:

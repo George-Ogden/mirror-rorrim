@@ -14,6 +14,7 @@ from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .githelper import GitHelper
+from .logger import describe
 from .typed_path import AbsFile, RelFile, Remote, TypedPath
 
 
@@ -268,6 +269,7 @@ class Parser:
         return self.parse_mirror_config(tree)
 
     @classmethod
+    @describe("Parsing config")
     def parse_file(cls, filepath: AbsFile | RelFile) -> MirrorConfig:
         parser = cls(filepath)
         return parser.parse()

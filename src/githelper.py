@@ -10,6 +10,7 @@ from git.cmd import _AutoInterrupt as AutoInterrupt
 
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
+from .logger import describe
 from .typed_path import AbsDir, RelFile, Remote
 
 
@@ -50,13 +51,15 @@ class GitHelper:
 
     @classmethod
     def _clone(cls, remote: Remote, local: AbsDir) -> None:
-        GitRepo.clone_from(os.fspath(remote), os.fspath(local))
+        with describe(f"Cloning {remote} into {local}", error_level="DEBUG"):
+            GitRepo.clone_from(os.fspath(remote), os.fspath(local))
 
     @classmethod
     def _sync(cls, local: AbsDir) -> None:
-        repo = cls.repo(local)
-        [fetch_info] = repo.remote().fetch()
-        repo.head.reset(fetch_info.commit, working_tree=True, index=True)
+        with describe(f"Pulling {cls.repo(local).remote().url} into {local}", error_level="DEBUG"):
+            repo = cls.repo(local)
+            [fetch_info] = repo.remote().fetch()
+            repo.head.reset(fetch_info.commit, working_tree=True, index=True)
 
     @classmethod
     def fresh_diff(cls, local: AbsDir, file: RelFile) -> str:

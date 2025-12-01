@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Self
 
 from .config import MirrorConfig
+from .logger import describe
 from .repo import MirrorRepo
 from .state import MirrorState
 from .typed_path import AbsDir
@@ -19,6 +20,7 @@ class Mirror:
     def __iter__(self) -> Iterator[MirrorRepo]:
         return iter(self.repos)
 
+    @describe("Checking out all repos", level="INFO")
     def checkout_all(self) -> None:
         for repo in self:
             repo.checkout()
