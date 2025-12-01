@@ -14,13 +14,13 @@ from .typed_path import AbsDir, RelFile, Remote
 
 
 def quick_installer(
-    target: None | AbsDir, remote: tuple[str | None, str | RelFile] | None
+    target: None | str | AbsDir, remote: tuple[str | None, str | RelFile] | None
 ) -> Installer:
     source_remote, source_path = remote or (None, MIRROR_FILE)
     return Installer(
         source_remote=None if source_remote is None else Remote(source_remote),
         source_path=RelFile(source_path),
-        target=target or AbsDir.cwd(),
+        target=AbsDir(target or AbsDir.cwd()),
     )
 
 

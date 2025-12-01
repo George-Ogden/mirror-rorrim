@@ -8,6 +8,8 @@ import git
 from git import Repo as GitRepo
 from git.cmd import _AutoInterrupt as AutoInterrupt
 
+from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
+from .lock import FileSystemSemaphore
 from .typed_path import AbsDir, RelFile, Remote
 
 
@@ -24,7 +26,16 @@ class GitHelper:
 
     @classmethod
     @functools.cache
-    def checkout(cls, remote: Remote, local: AbsDir) -> None:
+    def checkout(cls, remote: Remote, local: AbsDir) -> FileSystemSemaphore:
+        semaphore = FileSystemSemaphore.acquire(local + MIRROR_SEMAPHORE_EXTENSION)
+        if semaphore.leader:
+            cls._checkout(remote, local)
+        semaphore.synchronize(local + MIRROR_MONITOR_EXTENSION)
+        # semaphore is cached to prevent destruction until exit
+        return semaphore
+
+    @classmethod
+    def _checkout(cls, remote: Remote, local: AbsDir) -> None:
         try:
             cls._clone(remote, local)
         except git.GitCommandError as e:

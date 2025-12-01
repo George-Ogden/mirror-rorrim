@@ -43,8 +43,8 @@ def test_installer_source_repo(
 @pytest.mark.parametrize(
     "test_name, source",
     [
-        ("empty_repo_with_config", None),
-        ("repo_with_multiple_configs", (None, "config.yaml")),
+        pytest.param("empty_repo_with_config", None, marks=[pytest.mark.slow]),
+        pytest.param("repo_with_multiple_configs", (None, "config.yaml"), marks=[pytest.mark.slow]),
         (
             "remote_only",
             ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),

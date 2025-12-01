@@ -1,5 +1,11 @@
+from __future__ import annotations
+
+from collections.abc import Generator
+from multiprocessing import Process, Queue
 from pathlib import Path
+import random
 import tempfile
+import time
 
 import git
 import pytest
@@ -99,3 +105,51 @@ def test_sync(expected_files: list[str], folder: AbsDir) -> None:
     GitHelper._sync(folder)
     for file in expected_files:
         assert (folder / RelFile(file)).exists()
+
+
+def commit_repeatedly(remote: AbsDir) -> None:
+    i = 1
+    while True:
+        add_commit(remote, dict(file=i))
+        i += 1
+        time.sleep(0.01)
+
+
+def write_commit_to_queue(remote: Remote, local: AbsDir, queue: Queue[str]) -> None:
+    # Can clear cache because the lock is saved locally in test body.
+    GitHelper.checkout.cache_clear()
+    GitHelper.checkout(remote, local)
+    with open(local / RelFile("file")) as f:
+        print(f"follower value = {f.read()}")
+    queue.put(GitHelper.commit(local))
+
+
+@pytest.fixture
+def updating_remote() -> Generator[Remote]:
+    remote = Remote(tempfile.mkdtemp())
+    add_commit(AbsDir(remote.repo), dict(file=0))
+    committer = Process(target=commit_repeatedly, args=(remote,))
+    committer.start()
+    yield remote
+    committer.kill()
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("seed", range(3))
+def test_checkout_race_condition(
+    typed_tmp_path: AbsDir, seed: int, updating_remote: Remote
+) -> None:
+    local = typed_tmp_path
+    random.seed(seed)
+    time.sleep(random.random())
+    lock = GitHelper.checkout(updating_remote, local)
+    assert lock.leader
+    commit = GitHelper.commit(local)
+    with open(local / RelFile("file")) as f:
+        print(f"leader value = {f.read()}")
+    time.sleep(random.random())
+    queue: Queue[str] = Queue()
+    follower = Process(target=write_commit_to_queue, args=(updating_remote, local, queue))
+    follower.start()
+    follower.join(1.0)
+    assert queue.get_nowait() == commit

@@ -177,7 +177,7 @@ def repeated_file_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
 @pytest.mark.parametrize(
     "repo, expected_state",
     [
-        (
+        pytest.param(
             quick_mirror_repo(
                 "https://github.com/George-Ogden/concurrent-language",
                 [("Grammar.g4", "grammar.antlr"), "Makefile"],
@@ -187,6 +187,7 @@ def repeated_file_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
                 "3d47e3072dbdaf9137ea817d8be1f9639dd375de",
                 ["Grammar.g4", "Makefile"],
             ),
+            marks=[pytest.mark.slow],
         ),
         local_repo_state_test_case(),
         repeated_file_test_case(),
