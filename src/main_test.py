@@ -7,13 +7,17 @@ from inline_snapshot import snapshot
 import pytest
 from pytest import CaptureFixture
 
-from .constants import MIRROR_LOCK
+from .constants import MIRROR_LOCK, MIRROR_NAME
 from .main import main
 from .typed_path import AbsDir, RelDir, RelFile
 
 
 def remove_git_data(local: AbsDir) -> None:
     shutil.rmtree(local / RelDir(".git"))
+
+
+def add_lock(local: AbsDir) -> None:
+    (local / MIRROR_LOCK).path.touch()
 
 
 @pytest.mark.parametrize(
@@ -71,6 +75,14 @@ def remove_git_data(local: AbsDir) -> None:
             ),
             None,
         ),
+        (
+            # not a local repo
+            "install --config-repo https://github.com/George-Ogden/remote-installer-test-data --config-file config-only.yaml",
+            snapshot(
+                "FileExistsError: LOCAL_GIT_REPO/.mirror.lock - have you already installed Mirror|rorriM? If not, delete this file and try again."
+            ),
+            add_lock,
+        ),
     ],
 )
 def test_main(
@@ -83,14 +95,15 @@ def test_main(
     if setup_repo is not None:
         setup_repo(local_git_repo)
     argv = ["-q", *shlex.split(args)]
+    mirror_existed_before = (local_git_repo / MIRROR_LOCK).exists()
     with pytest.raises(SystemExit) as e:
-        main.main(argv, prog_name="Mirror|rorriM")
+        main.main(argv, prog_name=MIRROR_NAME)
     if expected is None:
         assert e.value.code == 0
         assert (local_git_repo / MIRROR_LOCK).exists()
     else:
         assert e.value.code != 0
-        assert not (local_git_repo / MIRROR_LOCK).exists()
+        assert (local_git_repo / MIRROR_LOCK).exists() == mirror_existed_before
         out, _err = capsys.readouterr()
         assert (
             out.replace(os.fspath(local_git_repo), "LOCAL_GIT_REPO").replace("\n", "\t").strip()

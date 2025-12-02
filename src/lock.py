@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
+import errno
 import fcntl
 import time
 from typing import Self
 
+from .constants import MIRROR_NAME
 from .state import WriteableState
 from .typed_path import AbsFile, PyFile
 
@@ -19,11 +21,18 @@ class FileSystemLock:
 
     @classmethod
     def create(cls, filepath: AbsFile) -> Self:
-        file = open(filepath, "x")  # noqa: SIM115
-        lock = cls.acquire_non_blocking(file)
-        if lock is None:
-            file.close()
-            raise FileExistsError(filepath.path)
+        try:
+            file = open(filepath, "x")  # noqa: SIM115
+            lock = cls.acquire_non_blocking(file)
+            if lock is None:
+                file.close()
+                raise FileExistsError()
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                raise FileExistsError(
+                    f"{filepath.path} - have you already installed {MIRROR_NAME}? If not, delete this file and try again."
+                ) from None
+            raise e
         return lock
 
     @classmethod

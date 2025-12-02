@@ -4,6 +4,8 @@ import platformdirs
 
 from .typed_path import AbsDir, Ext, RelFile
 
+MIRROR_NAME: str = "Mirror|rorriM"
+
 MIRROR_LOCK: RelFile = RelFile(Path(".mirror.lock"))
 MIRROR_FILE: RelFile = RelFile(Path(".mirror.yaml"))
 MIRROR_SEMAPHORE_EXTENSION: Ext = Ext(".sem")
