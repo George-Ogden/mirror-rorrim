@@ -54,7 +54,11 @@ class MirrorRepoState(AutoState):
 
 @dataclass(frozen=True, slots=True)
 class MirrorState(AutoState):
-    comment: ClassVar[str] = (
-        "DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can use it."
+    LOCK_COMMENT: ClassVar[str] = (
+        "DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly."
     )
     repos: Sequence[MirrorRepoState]
+
+    def dump(self, f: SupportsWrite[str]) -> None:
+        f.write(f"# {self.LOCK_COMMENT}\n")
+        AutoState.dump(self, f)
