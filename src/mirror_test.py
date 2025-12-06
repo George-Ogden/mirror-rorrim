@@ -101,6 +101,6 @@ def test_mirror_state(mirror: Mirror, snapshot: SnapshotAssertion, typed_tmp_pat
         f.seek(0)
         contents = f.read()
         if hasattr(mirror, "__replacement__"):
-            for search, replacement in mirror.__replacement__.items():  # type: ignore [attr]
+            for search, replacement in mirror.__replacement__.items():
                 contents = contents.replace(search, replacement)
         assert contents == snapshot

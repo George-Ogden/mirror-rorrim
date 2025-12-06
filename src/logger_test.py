@@ -3,7 +3,7 @@ import textwrap
 
 from loguru import logger
 import pytest
-from pytest import LogCaptureFixture  # noqa: PT013
+from pytest import LogCaptureFixture
 
 from .logger import describe, log_level_name
 
