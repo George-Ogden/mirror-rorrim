@@ -35,7 +35,7 @@ def local_remote_clone_test_case() -> tuple[str, list[str]]:
             # SSH remote
             "git@github.com:George-Ogden/pytest-dbg.git",
             ["src/plugin.py"],
-            marks=[pytest.mark.slow],
+            marks=[pytest.mark.slow, pytest.mark.local],
         ),
         local_remote_clone_test_case(),
     ],

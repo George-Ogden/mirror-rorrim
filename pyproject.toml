@@ -35,4 +35,4 @@ python_files = "*_test.py"
 addopts = '--capture=sys --inline-snapshot=review -m "not slow"'
 pythonpath = ["."]
 log_format = "%(message)s"
-markers = ["typed: marks tests for type checking", "slow: affects the runtime of the test suite"]
+markers = ["typed: marks tests for type checking", "slow: affects the runtime of the test suite", "local: skip on the remote test server"]
