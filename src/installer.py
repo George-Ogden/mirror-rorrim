@@ -8,7 +8,7 @@ from typing import cast
 from .config import MirrorConfig
 from .config_parser import Parser
 from .constants import MIRROR_FILE, MIRROR_LOCK
-from .file import MirrorFile
+from .file import MirrorFile, VersionedMirrorFile
 from .githelper import GitHelper
 from .lock import FileSystemLock, WriteableState
 from .logger import describe
@@ -69,7 +69,12 @@ class Installer:
             return None
         mirror_repo = MirrorRepo(
             source=self.source_remote,
-            files=[MirrorFile(source=cast(RelFile, self.source_path), target=MIRROR_FILE)],
+            files=[
+                VersionedMirrorFile(
+                    MirrorFile(source=cast(RelFile, self.source_path), target=MIRROR_FILE),
+                    commit=None,
+                )
+            ],
         )
         mirror_repo.checkout()
         return mirror_repo

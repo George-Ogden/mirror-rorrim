@@ -6,7 +6,7 @@ from typing import Any
 import git
 
 from .constants import MIRROR_FILE
-from .file import MirrorFile
+from .file import MirrorFile, VersionedMirrorFile
 from .installer import Installer
 from .mirror import Mirror
 from .repo import MirrorRepo
@@ -38,7 +38,10 @@ def quick_mirror_repo(
     return MirrorRepo(
         source=Remote(os.fspath(source)),
         files=[
-            quick_mirror_file(*file) if isinstance(file, tuple) else quick_mirror_file(file)
+            VersionedMirrorFile(
+                quick_mirror_file(*file) if isinstance(file, tuple) else quick_mirror_file(file),
+                commit=None,
+            )
             for file in files
         ],
     )

@@ -5,7 +5,7 @@ from typing import Self
 from .config import MirrorRepoConfig
 from .constants import MIRROR_CACHE
 from .diff import Diff
-from .file import MirrorFile
+from .file import VersionedMirrorFile
 from .githelper import GitHelper
 from .logger import describe
 from .state import MirrorRepoState
@@ -42,11 +42,14 @@ class IrregularFileError(Exception):
 @dataclass(frozen=True)
 class MirrorRepo:
     source: Remote
-    files: Sequence[MirrorFile]
+    files: Sequence[VersionedMirrorFile]
 
     @classmethod
     def from_config(cls, config: MirrorRepoConfig) -> Self:
-        return cls(config.source, [MirrorFile.from_config(subconfig) for subconfig in config.files])
+        return cls(
+            config.source,
+            [VersionedMirrorFile.from_config(subconfig) for subconfig in config.files],
+        )
 
     @property
     def cache(self) -> AbsDir:
@@ -68,7 +71,7 @@ class MirrorRepo:
 
     def diffs(self) -> Iterable[Diff]:
         for file in self.files:
-            yield Diff.new_file(self.cache, file)
+            yield Diff.new_file(self.cache, file.file)
 
     def update(self, target: AbsDir) -> None:
         for diff in self.diffs():
