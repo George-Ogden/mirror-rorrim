@@ -13,7 +13,7 @@ from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
 from .state import MirrorRepoState
 from .test_utils import add_commit, quick_mirror_repo
-from .typed_path import AbsDir, RelDir, RelFile, Remote
+from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
 
 
 @pytest.fixture
@@ -153,7 +153,7 @@ def test_update_all(
 
 
 def quick_repo_state(source: str, commit: str, files: Sequence[str]) -> MirrorRepoState:
-    return MirrorRepoState(Remote(source), commit, sorted(RelFile(file) for file in files))
+    return MirrorRepoState(Remote(source), Commit(commit), sorted(RelFile(file) for file in files))
 
 
 def local_repo_state_test_case() -> tuple[MirrorRepo, MirrorRepoState]:

@@ -2,20 +2,17 @@
 # name: test_mirror_state[mirror1-multiple_repos_local_test_case]
   '''
   # DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.
-  repos:
   - commit: commit1
     files:
-    - path: file1
-    - path: file2
-    source:
-      repo: remote1
+    - file1
+    - file2
+    source: remote1
   - commit: commit2
     files:
-    - path: file3
-    - path: file4
-    - path: file5
-    source:
-      repo: remote2
+    - file3
+    - file4
+    - file5
+    source: remote2
   
   '''
 # ---

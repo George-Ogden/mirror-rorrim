@@ -103,6 +103,11 @@ class AbsDir(TypedPath):
         return cls(Path.cwd())
 
 
+@dataclass(frozen=True, slots=True)
+class Ext:
+    extension: str
+
+
 @dataclass(frozen=True)
 class Remote:
     repo: str
@@ -125,8 +130,8 @@ class Remote:
 
 
 @dataclass(frozen=True, slots=True)
-class Ext:
-    extension: str
+class Commit:
+    sha: str
 
 
 type PyFile = io.TextIOWrapper

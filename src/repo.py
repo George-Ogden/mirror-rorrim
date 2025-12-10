@@ -9,7 +9,7 @@ from .file import MirrorFile
 from .githelper import GitHelper
 from .logger import describe
 from .state import MirrorRepoState
-from .typed_path import AbsDir, RelDir, RelFile, Remote
+from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
 
 
 @dataclass
@@ -83,5 +83,5 @@ class MirrorRepo:
         )
 
     @property
-    def commit(self) -> str:
-        return GitHelper.commit(self.cache)
+    def commit(self) -> Commit:
+        return Commit(GitHelper.commit(self.cache))

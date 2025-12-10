@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import yaml
 
-from .typed_path import RelFile, Remote
+from .typed_path import Commit, RelFile, Remote
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite
@@ -28,10 +28,14 @@ class AutoState(yaml.YAMLObject):
     def represent(cls, obj: Any) -> Any:
         match obj:
             case _ if dataclasses.is_dataclass(obj):
-                return {
-                    attr.name: cls.represent(getattr(obj, attr.name))
-                    for attr in dataclasses.fields(obj)
-                }
+                try:
+                    [field] = dataclasses.fields(obj)
+                except ValueError:
+                    return {
+                        field.name: cls.represent(getattr(obj, field.name))
+                        for field in dataclasses.fields(obj)
+                    }
+                return cls.represent(getattr(obj, field.name))
             case list() | set() | tuple():
                 return [cls.represent(sub_obj) for sub_obj in obj]
             case os.PathLike():
@@ -48,7 +52,7 @@ class AutoState(yaml.YAMLObject):
 @dataclass(frozen=True, slots=True)
 class MirrorRepoState(AutoState):
     source: Remote
-    commit: str
+    commit: Commit
     files: Sequence[RelFile]
 
 
