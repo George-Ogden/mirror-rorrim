@@ -1,0 +1,12 @@
+# serializer version: 1
+# name: test_installer_install[remote_only-source2]
+  dict({
+    '.mirror.yaml': '''
+      repos:
+        - source: https://github.com/George-Ogden/remote-installer-test-data
+          files:
+            - .mirror.yaml: config-only.yaml
+  
+    ''',
+  })
+# ---

@@ -1,0 +1,68 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+import dataclasses
+from dataclasses import dataclass
+import os
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+
+import yaml
+
+from .typed_path import Commit, RelFile, Remote
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsWrite
+
+
+class WriteableState(Protocol):
+    def dump(self, f: SupportsWrite[str]) -> None: ...
+
+
+class AutoState(yaml.YAMLObject):
+    yaml_tag = None
+
+    def dump(self, f: SupportsWrite[str]) -> None:
+        f.write(yaml.safe_dump(self.representation, default_flow_style=False))
+
+    @classmethod
+    def represent(cls, obj: Any) -> Any:
+        match obj:
+            case _ if dataclasses.is_dataclass(obj):
+                try:
+                    [field] = dataclasses.fields(obj)
+                except ValueError:
+                    return {
+                        field.name: cls.represent(getattr(obj, field.name))
+                        for field in dataclasses.fields(obj)
+                    }
+                return cls.represent(getattr(obj, field.name))
+            case list() | set() | tuple():
+                return [cls.represent(sub_obj) for sub_obj in obj]
+            case os.PathLike():
+                return os.fspath(obj)
+            case str():
+                return obj
+        raise TypeError()
+
+    @property
+    def representation(self) -> Any:
+        return self.represent(self)
+
+
+@dataclass(frozen=True, slots=True)
+class MirrorRepoState(AutoState):
+    source: Remote
+    commit: Commit
+    files: Sequence[RelFile]
+
+
+@dataclass(frozen=True, slots=True)
+class MirrorState(AutoState):
+    LOCK_COMMENT: ClassVar[str] = (
+        "DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly."
+    )
+    repos: Sequence[MirrorRepoState]
+
+    def dump(self, f: SupportsWrite[str]) -> None:
+        f.write(f"# {self.LOCK_COMMENT}\n")
+        AutoState.dump(self, f)

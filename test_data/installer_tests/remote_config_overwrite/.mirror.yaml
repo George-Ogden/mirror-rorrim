@@ -1,0 +1,4 @@
+repos:
+  - source: .
+    files:
+      - .mirror.yaml

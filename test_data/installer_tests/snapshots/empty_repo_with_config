@@ -1,0 +1,27 @@
+# serializer version: 1
+# name: test_installer_install[empty_repo_with_config-None]
+  dict({
+    '.mirror.yaml': '''
+      repos:
+        - source: https://github.com/George-Ogden/dbg
+          files:
+            - debug_init.py: debug/__init__.py
+            - _debug_init.py: _debug/__init__.py
+  
+    ''',
+    '_debug_init.py': '''
+      from .config import CONFIG
+      from .debug import dbg
+      from .format import pformat, pprint
+      
+      __all__ = ["CONFIG", "dbg", "pformat", "pprint"]
+  
+    ''',
+    'debug_init.py': '''
+      from _debug import CONFIG, dbg, pformat, pprint
+      
+      __all__ = ["CONFIG", "dbg", "pformat", "pprint"]
+  
+    ''',
+  })
+# ---

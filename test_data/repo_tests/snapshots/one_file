@@ -1,0 +1,14 @@
+# serializer version: 1
+# name: test_update_all[repo0]
+  dict({
+    'file': '''
+      this file
+      has
+      multiple lines
+      
+      
+      and a few blanks
+  
+    ''',
+  })
+# ---

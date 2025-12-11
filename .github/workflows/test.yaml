@@ -13,3 +13,4 @@ jobs:
     uses: George-Ogden/actions/.github/workflows/python-test.yaml@v3.1.3
     with:
       python-versions: "['3.13']"
+      pytest-flags: -vv -m "not local"

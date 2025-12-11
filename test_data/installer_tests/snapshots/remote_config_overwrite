@@ -1,0 +1,24 @@
+# serializer version: 1
+# name: test_installer_install[remote_config_overwrite-source3]
+  dict({
+    '.mirror.yaml': '''
+      repos:
+      <<<<<<< ours
+      <<<<<<< ours
+        - source: .
+          files:
+            - .mirror.yaml
+      =======
+        - source: https://github.com/George-Ogden/remote-installer-test-data
+          files:
+            - .mirror.yaml: config-only.yaml
+      >>>>>>> theirs
+      =======
+        - source: https://github.com/George-Ogden/remote-installer-test-data
+          files:
+            - .mirror.yaml: config-only.yaml
+      >>>>>>> theirs
+  
+    ''',
+  })
+# ---

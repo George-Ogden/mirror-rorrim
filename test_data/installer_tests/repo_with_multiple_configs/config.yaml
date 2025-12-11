@@ -1,0 +1,8 @@
+repos:
+  - source: https://github.com/George-Ogden/linter
+    files:
+      - LICENSE
+  - source: https://github.com/George-Ogden/dbg
+    files:
+      - debug/__init__.py
+      - _debug/__init__.py

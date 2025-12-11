@@ -1,0 +1,18 @@
+# serializer version: 1
+# name: test_mirror_state[mirror1-multiple_repos_local_test_case]
+  '''
+  # DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.
+  - commit: commit1
+    files:
+    - file1
+    - file2
+    source: remote1
+  - commit: commit2
+    files:
+    - file3
+    - file4
+    - file5
+    source: remote2
+  
+  '''
+# ---
