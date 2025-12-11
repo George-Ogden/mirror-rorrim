@@ -53,4 +53,8 @@ def snapshot(
 @pytest.fixture(autouse=True)
 def log_everything() -> None:
     logger.remove()
-    logger.add(sys.stderr, level="TRACE")
+    logger.add(
+        sys.stderr,
+        level="TRACE",
+        format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{file.path}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    )

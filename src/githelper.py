@@ -5,8 +5,10 @@ from subprocess import PIPE
 from typing import Any
 
 import git
+from git import GitCommandError, GitError, InvalidGitRepositoryError
 from git import Repo as GitRepo
 from git.cmd import _AutoInterrupt as AutoInterrupt
+from loguru import logger
 
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
@@ -39,15 +41,18 @@ class GitHelper:
     def _checkout(cls, remote: Remote, local: AbsDir) -> None:
         try:
             cls._clone(remote, local)
-        except git.GitCommandError as e:
+        except GitCommandError as e:
+            logger.debug(e)
             try:
                 try:
                     cls._sync(local)
-                except git.InvalidGitRepositoryError:
+                except InvalidGitRepositoryError as e:
+                    logger.debug(e)
                     shutil.rmtree(local, ignore_errors=True)
                     cls._clone(remote, local)
-            except Exception:
-                raise e from None
+            except Exception as e:
+                logger.debug(e)
+                raise GitError(f"Unable to checkout {remote}.") from None
 
     @classmethod
     def _clone(cls, remote: Remote, local: AbsDir) -> None:
@@ -79,9 +84,9 @@ class GitHelper:
         return git.safe_decode(cmd.proc.stdout.read())
 
     @classmethod
-    def add(cls, local: AbsDir, file: RelFile) -> None:
+    def add(cls, local: AbsDir, *files: RelFile) -> None:
         # repo.index.add is not syncing
-        cls.run_command(local, "add", os.fspath(file))
+        cls.run_command(local, "add", *(os.fspath(file) for file in files))
 
     @classmethod
     def apply_patch(cls, local: AbsDir, patch: str) -> None:

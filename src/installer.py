@@ -1,6 +1,8 @@
+import contextlib
 from dataclasses import dataclass
 import functools
 import os
+import shutil
 from typing import cast
 
 from .config import MirrorConfig
@@ -27,7 +29,7 @@ class Installer:
         try:
             state = self._install()
             lock.unlock(state)
-            GitHelper.add(self.target, MIRROR_LOCK)
+            GitHelper.add(self.target, MIRROR_LOCK, MIRROR_FILE)
         except BaseException as e:
             os.remove(self.target / MIRROR_LOCK)
             raise e from e
@@ -88,9 +90,20 @@ class Installer:
 
     @describe("Updating all files", level="INFO")
     def update_all(self) -> None:
+        self.copy_mirror_file()
         if self.source_repo is not None:
             self.source_repo.update(self.target)
         self.mirror.update_all(self.target)
+
+    def copy_mirror_file(self) -> None:
+        with contextlib.suppress(shutil.SameFileError):
+            if self.source_repo is None:
+                shutil.copy2(self.source_path, self.target / MIRROR_FILE)
+            else:
+                shutil.copy2(
+                    self.source_repo.cache / cast(RelFile, self.source_path),
+                    self.target / MIRROR_FILE,
+                )
 
     @property
     def state(self) -> WriteableState:

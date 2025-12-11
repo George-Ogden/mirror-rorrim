@@ -1,0 +1,12 @@
+# serializer version: 1
+# name: test_installer_install[same_directory-None]
+  dict({
+    '.mirror.yaml': '''
+      repos:
+        - source: .
+          files:
+            - .mirror.yaml
+  
+    ''',
+  })
+# ---

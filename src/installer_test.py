@@ -3,10 +3,12 @@ import os
 import shutil
 from unittest import mock
 
+import git
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
 from .constants import MIRROR_FILE, MIRROR_LOCK
+from .githelper import GitHelper
 from .repo import MirrorRepo
 from .test_utils import quick_installer, quick_mirror_repo
 from .typed_path import AbsDir, RelDir, RelFile
@@ -53,6 +55,7 @@ def test_installer_source_repo(
             "remote_config_overwrite",
             ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
         ),
+        ("same_directory", None),
     ],
 )
 def test_installer_install(
@@ -65,6 +68,10 @@ def test_installer_install(
     installer = quick_installer(local_git_repo, source)
     with contextlib.suppress(FileNotFoundError):
         shutil.copytree(test_data_path / RelDir(test_name), local_git_repo, dirs_exist_ok=True)
+        # gitpython-developers/GitPython#2085
+        repo = git.Repo(os.fspath(local_git_repo))
+        GitHelper.add(AbsDir(local_git_repo), RelFile("."))
+        repo.index.commit("Make remote a Git repo")
     if isinstance(installer.source, RelFile):
         object.__setattr__(installer, "source", local_git_repo / installer.source)
     installer.install()

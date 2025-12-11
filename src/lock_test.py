@@ -6,6 +6,7 @@ from multiprocessing import Process, Queue
 import random
 import time
 from typing import TYPE_CHECKING, Self
+from unittest import mock
 
 import pytest
 
@@ -166,7 +167,37 @@ def test_file_system_semaphore_single_process_interleaved(
         leader_lock.release()
 
 
-def follower_process(
+def single_follower_process(
+    semaphore_path: AbsFile,
+    monitor_path: AbsFile,
+) -> None:
+    with mock.patch.object(FileSystemSemaphore, "TIMEOUT_SECONDS", 0.5):
+        lock = FileSystemSemaphore.acquire(semaphore_path)
+        lock.synchronize(monitor_path)
+        lock.release()
+
+
+@pytest.mark.slow
+def test_file_system_semaphore_leader_crash(
+    tmp_lock_path: AbsFile,
+    tmp_extra_lock_path: AbsFile,
+) -> None:
+    follower = Process(
+        target=single_follower_process,
+        args=(tmp_lock_path, tmp_extra_lock_path),
+    )
+    with open(tmp_lock_path, "x"), open(tmp_extra_lock_path, "x"):
+        ...
+    leader_lock = FileSystemSemaphore.acquire(tmp_lock_path)
+    follower.start()
+    leader_lock.release()
+    follower.join(1.0)
+    if follower.is_alive():
+        follower.kill()
+        pytest.fail("Follower did not terminate")
+
+
+def multi_follower_process(
     semaphore_path: AbsFile,
     monitor_path: AbsFile,
     data_path: AbsFile,
@@ -206,7 +237,7 @@ def test_file_system_semaphore_multiple_processes(
     queue: Queue[tuple[int, str]] = Queue()
     followers = [
         Process(
-            target=follower_process,
+            target=multi_follower_process,
             args=(tmp_lock_path, tmp_extra_lock_path, data_path, queue, idx),
         )
         for idx in range(num_followers)

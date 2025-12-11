@@ -1,6 +1,17 @@
 # serializer version: 1
 # name: test_installer_install[repo_with_multiple_configs-source1]
   dict({
+    '.mirror.yaml': '''
+      repos:
+        - source: https://github.com/George-Ogden/linter
+          files:
+            - LICENSE
+        - source: https://github.com/George-Ogden/dbg
+          files:
+            - debug/__init__.py
+            - _debug/__init__.py
+  
+    ''',
     'LICENSE': '''
       MIT License
       

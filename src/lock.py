@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import errno
 import fcntl
 import time
-from typing import Self
+from typing import ClassVar, Self
 
 from .constants import MIRROR_NAME
 from .state import WriteableState
@@ -58,6 +58,7 @@ class FileSystemSemaphore:
     semaphore: PyFile
     leader: bool
     key: str
+    TIMEOUT_SECONDS: ClassVar[float] = 1.0
 
     def __del__(self) -> None:
         self.release()
@@ -100,11 +101,13 @@ class FileSystemSemaphore:
             f.flush()
 
     def wait(self, monitor: AbsFile) -> None:
-        while True:
+        start_time = time.time()
+        while time.time() < start_time + self.TIMEOUT_SECONDS:
             with contextlib.suppress(OSError), open(monitor) as f:
                 if f.read() == self.key:
                     return
             time.sleep(0.01)
+        raise TimeoutError("Wait timed out while waiting for another process to complete the task.")
 
     def release(self) -> None:
         self.semaphore.close()

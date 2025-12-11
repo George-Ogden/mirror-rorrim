@@ -1,19 +1,14 @@
 from collections.abc import Callable, Collection
-import contextlib
 from dataclasses import dataclass, field
 import difflib
 import functools
 import inspect
-import os.path
 from typing import Any, NoReturn, cast
 
-import git
-from git import Repo as GitRepo
 import yaml
 from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
-from .githelper import GitHelper
 from .logger import describe
 from .typed_path import AbsFile, RelFile, Remote, TypedPath
 
@@ -228,14 +223,6 @@ class Parser:
     def parse_remote(self, node: Node) -> Remote:
         match node:
             case ScalarNode() if isinstance(node.value, str):
-                with contextlib.suppress(git.GitError):
-                    if os.path.samefile(
-                        cast(GitRepo, GitHelper.repo(node.value)).working_dir,
-                        os.path.realpath(node.value),
-                    ):
-                        self.fail(
-                            f"remote {node.value!r} points to the same repository, which is not allowed."
-                        )
                 remote = Remote(node.value)
                 self._check_duplicate_remote(remote, node)
                 return remote
