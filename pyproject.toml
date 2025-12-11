@@ -1,38 +1,11 @@
 [project]
 name = "mirror-rorrim"
-version = "0.1.0"
 requires-python = ">=3.12,<3.15"
-dynamic = ["dependencies"]
+authors = [{name = "George Ogden"}]
+license = {file = "LICENSE"}
+readme = "README.md"
+dynamic = ["dependencies", "version"]
 
-[tool.ruff]
-line-length = 100
-
-[tool.ruff.lint]
-extend-select = ["B", "E", "ERA", "F", "I", "N", "PT", "PYI", "RET", "RUF", "SIM", "UP", "W"]
-extend-ignore = ["E501", "F811", "PT011", "PT012", "PT013", "PYI041", "RET504", "SIM118"]
-
-[tool.ruff.lint.isort]
-force-sort-within-sections = true
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-
-[tool.ruff.lint.flake8-pytest-style]
-parametrize-names-type = "csv"
-
-[tool.mypy]
-warn_unreachable = true
-disallow_subclassing_any = true
-disallow_incomplete_defs = true
-disallow_untyped_defs = true
-warn_unused_ignores = true
-strict_equality = true
-plugins = ["mypy_pytest_plugin"]
-
-[tool.pytest.ini_options]
-python_files = "*_test.py"
-addopts = '--capture=sys --inline-snapshot=review -m "not slow"'
-pythonpath = ["."]
-log_format = "%(message)s"
-markers = ["typed: marks tests for type checking", "slow: affects the runtime of the test suite", "local: skip on the remote test server"]
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+version = {file = ["version.txt"]}
