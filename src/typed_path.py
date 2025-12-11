@@ -120,7 +120,7 @@ class Remote:
 
     @property
     def canonical(self) -> str:
-        return os.path.normpath(self.repo)
+        return os.path.realpath(self)
 
     @functools.cached_property
     def hash(self) -> str:
