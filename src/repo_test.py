@@ -1,10 +1,12 @@
 from collections.abc import Callable, Generator, Sequence
 import os
+from pathlib import Path
 import shutil
 import tempfile
 from unittest import mock
 
 import git
+from git import GitError
 from inline_snapshot import snapshot
 import pytest
 from syrupy.assertion import SnapshotAssertion
@@ -34,7 +36,7 @@ def checkout_with_missing_file_test_case() -> tuple[
     add_commit(remote, dict.fromkeys(["file1", "file3"]))
     return lambda: quick_mirror_repo(remote, ["file1", ("file2", "file3")]), (
         MissingFileError,
-        snapshot(),
+        snapshot("'file2' could not be found from 'REMOTE'."),
     )
 
 
@@ -50,16 +52,16 @@ def checkout_not_behind_repository_test_case() -> tuple[Callable[[], MirrorRepo]
     return setup_repo, None
 
 
-def checkout_not_a_git_repo_test_case() -> tuple[Callable[[], MirrorRepo], None]:
+def checkout_not_a_git_repo_test_case() -> tuple[
+    Callable[[], MirrorRepo], tuple[type[GitError], str]
+]:
     def setup_repo() -> MirrorRepo:
         remote = tempfile.mkdtemp()
-        add_commit(remote, dict.fromkeys(["file1"]))
-        repo = quick_mirror_repo(remote, ["file1"])
-        repo.cache.path.mkdir()
-        (repo.cache.path / "file").touch()
+        repo = quick_mirror_repo(remote, ["file"])
+        (Path(remote) / "file").touch()
         return repo
 
-    return setup_repo, None
+    return setup_repo, (GitError, snapshot("Unable to checkout 'REMOTE'."))
 
 
 @pytest.mark.parametrize(
@@ -91,9 +93,8 @@ def test_checkout(
         error_type, error_msg = error
         with pytest.raises(error_type) as e:
             repo.checkout()
-        error_msg = str(e.value)
-        assert error_msg == error_msg
-        assert error_msg.endswith(".")
+        assert str(e.value).replace(repo.source.repo, "REMOTE") == error_msg
+        assert str(e.value).endswith(".")
 
 
 @pytest.fixture
