@@ -84,9 +84,9 @@ class GitHelper:
         return git.safe_decode(cmd.proc.stdout.read())
 
     @classmethod
-    def add(cls, local: AbsDir, file: RelFile) -> None:
+    def add(cls, local: AbsDir, *files: RelFile) -> None:
         # repo.index.add is not syncing
-        cls.run_command(local, "add", os.fspath(file))
+        cls.run_command(local, "add", *(os.fspath(file) for file in files))
 
     @classmethod
     def apply_patch(cls, local: AbsDir, patch: str) -> None:
