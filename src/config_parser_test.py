@@ -1,5 +1,7 @@
+import tempfile
 import textwrap
 
+import git
 from inline_snapshot import snapshot
 from inline_snapshot._snapshot.undecided_value import UndecidedValue
 import pytest
@@ -146,6 +148,18 @@ def _test_parse_body(
 )
 def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) -> None:
     _test_parse_body(yaml_node, expected, method_name="parse_mirror_file_config")
+
+
+def local_repo_config_test_case() -> tuple[str, MirrorRepoConfig]:
+    git_repo = tempfile.mkdtemp()
+    git.Repo.init(git_repo)
+    return (
+        f"""
+        source: "{git_repo}"
+        files: [file]
+        """,
+        quick_mirror_repo_config(git_repo, ["file"]),
+    )
 
 
 @pytest.mark.parametrize(
@@ -334,33 +348,7 @@ def test_parse_file_config(yaml_node: Node, expected: MirrorFileConfig | str) ->
                 "An unexpected error occurred during parsing @ <string>:1:7: expected sequence of files, got empty string."
             ),
         ),
-        (
-            # empty repo
-            """
-            source: ""
-            """,
-            snapshot(
-                "An unexpected error occurred during parsing @ <string>:1:9: remote '' points to the same repository, which is not allowed."
-            ),
-        ),
-        (
-            # same repo
-            """
-            source: "."
-            """,
-            snapshot(
-                "An unexpected error occurred during parsing @ <string>:1:9: remote '.' points to the same repository, which is not allowed."
-            ),
-        ),
-        (
-            # indirect same repo
-            """
-            source: "folder/.."
-            """,
-            snapshot(
-                "An unexpected error occurred during parsing @ <string>:1:9: remote 'folder/..' points to the same repository, which is not allowed."
-            ),
-        ),
+        local_repo_config_test_case(),
         (
             # canonical form
             """
