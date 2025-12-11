@@ -39,7 +39,7 @@ class GitHelper:
     def _checkout(cls, remote: Remote, local: AbsDir) -> None:
         try:
             cls._clone(remote, local)
-        except git.GitCommandError as e:
+        except git.GitCommandError:
             try:
                 try:
                     cls._sync(local)
@@ -47,7 +47,7 @@ class GitHelper:
                     shutil.rmtree(local, ignore_errors=True)
                     cls._clone(remote, local)
             except Exception:
-                raise e from None
+                raise git.GitError(f"Unable to checkout {remote}") from None
 
     @classmethod
     def _clone(cls, remote: Remote, local: AbsDir) -> None:
