@@ -18,7 +18,7 @@ repos:
         args: [--fix]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.4
+    rev: v0.14.8
     hooks:
       - id: ruff-format
       - id: ruff-check
@@ -31,6 +31,11 @@ repos:
       - id: prettier
         additional_dependencies: [prettier]
         exclude: /syntax_error\.yaml
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.9
+    hooks:
+      - id: actionlint
 
   - repo: https://github.com/George-Ogden/pre-commit-hooks
     rev: v2.0.3
