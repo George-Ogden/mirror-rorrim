@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from dataclasses import KW_ONLY, dataclass
 import functools
+import inspect
 import sys
 from types import TracebackType
 
@@ -29,10 +30,19 @@ class describe:  # noqa: N801
         return f"{self.message} {FAILURE_SUFFIX}"
 
     def log(self, message: str, /) -> None:
-        logger.log(self.level, message)
+        logger.opt(depth=self.depth).log(self.level, message)
 
     def error_log(self, message: str, /) -> None:
-        logger.log(self.error_level, message)
+        logger.opt(depth=self.depth).log(self.error_level, message)
+
+    @property
+    def depth(self) -> int:
+        """Return the depth of the first frame not in the file."""
+        for depth, frameinfo in enumerate(inspect.stack(), start=-1):
+            if frameinfo.filename != __file__:
+                return depth
+        # Fallback if cannot determine caller.
+        return 0
 
     def __enter__(self) -> None:
         self.log(self.start_message)
