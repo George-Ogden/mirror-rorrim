@@ -12,7 +12,7 @@ import pytest
 
 from .githelper import GitHelper
 from .test_utils import add_commit
-from .typed_path import AbsDir, RelFile, Remote
+from .typed_path import AbsDir, GitDir, RelFile, Remote
 
 
 def local_remote_clone_test_case() -> tuple[str, list[str]]:
@@ -46,49 +46,49 @@ def test_clone_remote(remote: str, expected_files: list[str], typed_tmp_path: Ab
         assert (typed_tmp_path / RelFile(file)).exists()
 
 
-def update_already_up_to_date_repo_test_case() -> tuple[list[str], AbsDir]:
+def update_already_up_to_date_repo_test_case() -> tuple[list[str], GitDir]:
     local = tempfile.mkdtemp()
     remote = tempfile.mkdtemp()
     add_commit(remote, dict.fromkeys(["file1", "file2"]))
     git.Repo(remote).clone(local)
-    return ["file1", "file2"], AbsDir(local)
+    return ["file1", "file2"], GitDir(local)
 
 
-def update_repository_linearly_behind_test_case() -> tuple[list[str], AbsDir]:
+def update_repository_linearly_behind_test_case() -> tuple[list[str], GitDir]:
     local = tempfile.mkdtemp()
     remote = tempfile.mkdtemp()
     add_commit(remote, dict.fromkeys(["file1"]))
     git.Repo(remote).clone(local)
     add_commit(remote, dict.fromkeys(["file1", "file2"]))
-    return ["file1", "file2"], AbsDir(local)
+    return ["file1", "file2"], GitDir(local)
 
 
-def update_repository_linearly_ahead_test_case() -> tuple[list[str], AbsDir]:
+def update_repository_linearly_ahead_test_case() -> tuple[list[str], GitDir]:
     local = tempfile.mkdtemp()
     remote = tempfile.mkdtemp()
     add_commit(remote, dict.fromkeys(["file1", "file2"]))
     git.Repo(remote).clone(local)
     add_commit(local, dict.fromkeys(["file1"]))
-    return ["file1", "file2"], AbsDir(local)
+    return ["file1", "file2"], GitDir(local)
 
 
-def update_repository_out_of_sync_test_case() -> tuple[list[str], AbsDir]:
+def update_repository_out_of_sync_test_case() -> tuple[list[str], GitDir]:
     local = tempfile.mkdtemp()
     remote = tempfile.mkdtemp()
     add_commit(remote, dict.fromkeys(["file1", "file2"]))
     git.Repo(remote).clone(local)
     add_commit(remote, dict.fromkeys(["file1", "file2", "file3"]))
     add_commit(local, dict.fromkeys(["file1"]))
-    return ["file1", "file2", "file3"], AbsDir(local)
+    return ["file1", "file2", "file3"], GitDir(local)
 
 
-def update_repository_with_dirty_workdir_test_case() -> tuple[list[str], AbsDir]:
+def update_repository_with_dirty_workdir_test_case() -> tuple[list[str], GitDir]:
     local = tempfile.mkdtemp()
     remote = tempfile.mkdtemp()
     add_commit(remote, dict.fromkeys(["file1", "file2"]))
     git.Repo(remote).clone(local)
     (Path(local) / "file2").unlink()
-    return ["file1", "file2"], AbsDir(local)
+    return ["file1", "file2"], GitDir(local)
 
 
 @pytest.mark.parametrize(
@@ -101,13 +101,13 @@ def update_repository_with_dirty_workdir_test_case() -> tuple[list[str], AbsDir]
         update_repository_with_dirty_workdir_test_case(),
     ],
 )
-def test_sync(expected_files: list[str], folder: AbsDir) -> None:
+def test_sync(expected_files: list[str], folder: GitDir) -> None:
     GitHelper._sync(folder)
     for file in expected_files:
         assert (folder / RelFile(file)).exists()
 
 
-def commit_repeatedly(remote: AbsDir) -> None:
+def commit_repeatedly(remote: GitDir) -> None:
     i = 1
     while True:
         add_commit(remote, dict(file=i))
@@ -115,7 +115,7 @@ def commit_repeatedly(remote: AbsDir) -> None:
         time.sleep(0.01)
 
 
-def write_commit_to_queue(remote: Remote, local: AbsDir, queue: Queue[str]) -> None:
+def write_commit_to_queue(remote: Remote, local: GitDir, queue: Queue[str]) -> None:
     # Can clear cache because the lock is saved locally in test body.
     GitHelper.checkout.cache_clear()
     GitHelper.checkout(remote, local)
@@ -139,7 +139,7 @@ def updating_remote() -> Generator[Remote]:
 def test_checkout_race_condition(
     typed_tmp_path: AbsDir, seed: int, updating_remote: Remote
 ) -> None:
-    local = typed_tmp_path
+    local = GitDir(typed_tmp_path, check=False)
     random.seed(seed)
     time.sleep(random.random())
     lock = GitHelper.checkout(updating_remote, local)

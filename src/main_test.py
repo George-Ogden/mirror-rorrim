@@ -9,10 +9,10 @@ from pytest import CaptureFixture
 
 from .constants import MIRROR_LOCK, MIRROR_NAME
 from .main import main
-from .typed_path import AbsDir, RelDir, RelFile
+from .typed_path import AbsDir, GitDir, RelDir, RelFile
 
 
-def remove_git_data(local: AbsDir) -> None:
+def remove_git_data(local: GitDir) -> None:
     shutil.rmtree(local / RelDir(".git"))
 
 
@@ -88,8 +88,8 @@ def add_lock(local: AbsDir) -> None:
 def test_main(
     args: str,
     expected: str | None,
-    setup_repo: Callable[[AbsDir], None] | None,
-    local_git_repo: AbsDir,
+    setup_repo: Callable[[GitDir], None] | None,
+    local_git_repo: GitDir,
     capsys: CaptureFixture,
 ) -> None:
     if setup_repo is not None:

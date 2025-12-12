@@ -9,7 +9,7 @@ from loguru import logger
 from .file import MirrorFile
 from .githelper import GitHelper
 from .logger import describe
-from .typed_path import AbsDir
+from .typed_path import GitDir
 
 
 @dataclass
@@ -18,7 +18,7 @@ class Diff:
     patch: str
 
     @classmethod
-    def new_file(cls, repo: AbsDir, file: MirrorFile) -> Self:
+    def new_file(cls, repo: GitDir, file: MirrorFile) -> Self:
         patch = GitHelper.fresh_diff(repo, file.source)
         _header, *patch_lines = patch.splitlines(keepends=True)
         cls.update_patch_lines(patch_lines, file)
@@ -59,7 +59,7 @@ class Diff:
     def _empty_deletion(cls) -> str:
         return f"--- {os.devnull}\n"
 
-    def apply(self, local: AbsDir) -> None:
+    def apply(self, local: GitDir) -> None:
         with contextlib.suppress(git.GitCommandError):
             GitHelper.add(local, self.file.target)
         with describe(f"Applying patch from {self.file.source} to {self.file.target}"):

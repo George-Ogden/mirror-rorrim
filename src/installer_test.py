@@ -9,7 +9,7 @@ from syrupy.assertion import SnapshotAssertion
 from .constants import MIRROR_FILE, MIRROR_LOCK
 from .repo import MirrorRepo
 from .test_utils import add_commit, quick_installer, quick_mirror_repo
-from .typed_path import AbsDir, RelDir, RelFile
+from .typed_path import AbsDir, GitDir, RelDir, RelFile
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def test_installer_source_repo(
 def test_installer_install(
     test_name: str,
     source: tuple[None | str, str] | None,
-    local_git_repo: AbsDir,
+    local_git_repo: GitDir,
     test_data_path: AbsDir,
     snapshot: SnapshotAssertion,
 ) -> None:

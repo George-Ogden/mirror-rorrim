@@ -2,14 +2,13 @@ import os
 import shutil
 import tempfile
 
-import git
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
 from .diff import Diff
 from .file import MirrorFile
-from .test_utils import quick_mirror_file
-from .typed_path import AbsDir, RelDir
+from .test_utils import add_commit, quick_mirror_file
+from .typed_path import AbsDir, GitDir, RelDir
 
 
 @pytest.fixture
@@ -34,13 +33,11 @@ def test_name(file: MirrorFile) -> str:
     ],
 )
 def test_diff_apply(
-    file: MirrorFile, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: AbsDir
+    file: MirrorFile, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: GitDir
 ) -> None:
     remote = AbsDir(tempfile.mkdtemp())
-    shutil.copytree(test_data_path / RelDir("remote"), remote, dirs_exist_ok=True)
-    # gitpython-developers/GitPython#2085
-    git.Repo.init(os.fspath(remote))
-    diff = Diff.new_file(remote, file)
+    add_commit(remote, test_data_path / RelDir("remote"))
+    diff = Diff.new_file(GitDir(remote), file)
     tmp_filepath = local_git_repo / file.target
     tmp_filepath.path.parent.mkdir(parents=True, exist_ok=True)
     current_path = test_data_path / RelDir("local") / file.target

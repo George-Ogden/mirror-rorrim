@@ -12,7 +12,7 @@ from .githelper import GitHelper
 from .installer import Installer
 from .mirror import Mirror
 from .repo import MirrorRepo
-from .typed_path import AbsDir, RelFile, Remote
+from .typed_path import AbsDir, GitDir, RelFile, Remote
 
 
 def quick_installer(
@@ -24,7 +24,7 @@ def quick_installer(
     source = source_path if source_remote is None else (source_remote, source_path)
     return Installer(
         source=source,
-        target=AbsDir(target or AbsDir.cwd()),
+        target=GitDir(target or AbsDir.cwd()),
     )
 
 
@@ -54,9 +54,9 @@ def quick_mirror(repos: list[MirrorRepo]) -> Mirror:
 
 
 def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> str:
-    path = AbsDir(path)
     # gitpython-developers/GitPython#2085
     repo = git.Repo.init(os.fspath(path))
+    path = GitDir(path)
 
     for file in glob(str(path.path / "*")):
         if os.path.isfile(file):

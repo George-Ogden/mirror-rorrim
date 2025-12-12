@@ -6,7 +6,7 @@ from .config import MirrorConfig
 from .logger import describe
 from .repo import MirrorRepo
 from .state import MirrorState
-from .typed_path import AbsDir
+from .typed_path import GitDir
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class Mirror:
         for repo in self:
             repo.checkout()
 
-    def update_all(self, target: AbsDir) -> None:
+    def update_all(self, target: GitDir) -> None:
         for repo in self:
             repo.update(target)
 

@@ -104,6 +104,16 @@ class AbsDir(TypedPath):
 
 
 @dataclass(frozen=True, slots=True)
+class GitDir(AbsDir):
+    def __init__(self, dir: AbsDir | Path | str, *, check: bool = True) -> None:
+        AbsDir.__init__(self, dir)
+        if check:
+            from .githelper import GitHelper
+
+            GitHelper.repo(self)
+
+
+@dataclass(frozen=True, slots=True)
 class Ext:
     extension: str
 

@@ -15,7 +15,7 @@ from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
 from .state import MirrorRepoState
 from .test_utils import add_commit, quick_mirror_repo
-from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
+from .typed_path import AbsDir, Commit, GitDir, RelDir, RelFile, Remote
 
 
 @pytest.fixture
@@ -133,7 +133,7 @@ def repo_renaming_test_case() -> MirrorRepo:
     ],
 )
 def test_update_all(
-    repo: MirrorRepo, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: AbsDir
+    repo: MirrorRepo, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: GitDir
 ) -> None:
     for file in repo.files:
         existing_file = test_data_path / RelDir("local") / file.target

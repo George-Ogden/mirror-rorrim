@@ -13,23 +13,23 @@ from loguru import logger
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
 from .logger import describe
-from .typed_path import AbsDir, Commit, RelFile, Remote
+from .typed_path import AbsDir, Commit, GitDir, RelFile, Remote
 
 
 class GitHelper:
     @classmethod
     @functools.cache
-    def repo(cls, local: AbsDir) -> GitRepo:
+    def repo(cls, local: GitDir) -> GitRepo:
         # Convert to string explicitly to gitpython-developers/GitPython#2085
         return GitRepo(os.fspath(local))
 
     @classmethod
-    def run_command(cls, local: AbsDir, command: str, *args: Any, **kwargs: Any) -> Any:
+    def run_command(cls, local: GitDir, command: str, *args: Any, **kwargs: Any) -> Any:
         return getattr(cls.repo(local).git, command)(*args, **kwargs)
 
     @classmethod
     @functools.cache
-    def checkout(cls, remote: Remote, local: AbsDir) -> FileSystemSemaphore:
+    def checkout(cls, remote: Remote, local: GitDir) -> FileSystemSemaphore:
         semaphore = FileSystemSemaphore.acquire(local + MIRROR_SEMAPHORE_EXTENSION)
         if semaphore.leader:
             cls._checkout(remote, local)
@@ -38,7 +38,7 @@ class GitHelper:
         return semaphore
 
     @classmethod
-    def _checkout(cls, remote: Remote, local: AbsDir) -> None:
+    def _checkout(cls, remote: Remote, local: GitDir) -> None:
         try:
             cls._clone(remote, local)
         except GitCommandError as e:
@@ -60,14 +60,14 @@ class GitHelper:
             GitRepo.clone_from(os.fspath(remote), os.fspath(local))
 
     @classmethod
-    def _sync(cls, local: AbsDir) -> None:
+    def _sync(cls, local: GitDir) -> None:
         with describe(f"Pulling {cls.repo(local).remote().url} into {local}", error_level="DEBUG"):
             repo = cls.repo(local)
             [fetch_info] = repo.remote().fetch()
             repo.head.reset(fetch_info.commit, working_tree=True, index=True)
 
     @classmethod
-    def fresh_diff(cls, local: AbsDir, file: RelFile) -> str:
+    def fresh_diff(cls, local: GitDir, file: RelFile) -> str:
         cmd: AutoInterrupt = cls.run_command(
             local,
             "diff",
@@ -84,12 +84,12 @@ class GitHelper:
         return git.safe_decode(cmd.proc.stdout.read())
 
     @classmethod
-    def add(cls, local: AbsDir, *files: RelFile) -> None:
+    def add(cls, local: GitDir, *files: RelFile) -> None:
         # repo.index.add is not syncing
         cls.run_command(local, "add", *(os.fspath(file) for file in files))
 
     @classmethod
-    def apply_patch(cls, local: AbsDir, patch: str) -> None:
+    def apply_patch(cls, local: GitDir, patch: str) -> None:
         cmd: AutoInterrupt = cls.run_command(
             local, "apply", "--allow-empty", "-3", "-", istream=PIPE, as_process=True
         )
@@ -100,9 +100,9 @@ class GitHelper:
         _ret_code = cmd.proc.wait()
 
     @classmethod
-    def commit(cls, local: AbsDir) -> str:
+    def commit(cls, local: GitDir) -> str:
         return cls.repo(local).head.commit.hexsha
 
     @classmethod
-    def tree(cls, local: AbsDir, commit: Commit | None = None) -> Tree:
+    def tree(cls, local: GitDir, commit: Commit | None = None) -> Tree:
         return cls.repo(local).tree(None if commit is None else str(commit))

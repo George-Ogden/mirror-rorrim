@@ -10,18 +10,19 @@ from .config_parser import Parser
 from .constants import MIRROR_FILE, MIRROR_LOCK
 from .file import MirrorFile, VersionedMirrorFile
 from .githelper import GitHelper
-from .lock import FileSystemLock, ReadWriteableState
+from .lock import FileSystemLock
 from .logger import describe
 from .mirror import Mirror
 from .repo import MirrorRepo
-from .typed_path import AbsDir, AbsFile, RelFile, Remote
+from .state import MirrorState, ReadWriteableState
+from .typed_path import AbsFile, GitDir, RelFile, Remote
 
 type InstallSource = AbsFile | RelFile | tuple[Remote, RelFile]
 
 
 @dataclass(frozen=True)
 class Installer:
-    target: AbsDir
+    target: GitDir
     source: InstallSource
 
     def install(self) -> None:
@@ -111,5 +112,5 @@ class Installer:
                 )
 
     @property
-    def state(self) -> ReadWriteableState:
+    def state(self) -> MirrorState:
         return self.mirror.state

@@ -15,7 +15,7 @@ from syrupy.types import SnapshotIndex
 import yaml
 from yaml import Node
 
-from .typed_path import AbsDir, AbsFile, RelDir, RelFile
+from .typed_path import AbsDir, AbsFile, GitDir, RelDir, RelFile
 
 
 @pytest.fixture
@@ -29,11 +29,11 @@ def typed_tmp_path(tmp_path: Path) -> AbsDir:
 
 
 @pytest.fixture
-def local_git_repo(typed_tmp_path: AbsDir, request: FixtureRequest) -> Generator[AbsDir]:
+def local_git_repo(typed_tmp_path: AbsDir, request: FixtureRequest) -> Generator[GitDir]:
     # gitpython-developers/GitPython#2085
     git.Repo.init(os.fspath(typed_tmp_path))
     os.chdir(typed_tmp_path)
-    yield typed_tmp_path
+    yield GitDir(typed_tmp_path)
     os.chdir(request.config.invocation_params.dir)
 
 

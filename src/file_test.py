@@ -2,7 +2,7 @@ import pytest
 
 from .file import MirrorFile
 from .test_utils import add_commit, quick_mirror_file
-from .typed_path import AbsDir, RelDir
+from .typed_path import AbsDir, GitDir, RelDir
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     ],
 )
 def test_exists_in(
-    file: MirrorFile, exists: bool, is_folder: bool, test_data_path: AbsDir, local_git_repo: AbsDir
+    file: MirrorFile, exists: bool, is_folder: bool, test_data_path: AbsDir, local_git_repo: GitDir
 ) -> None:
     add_commit(local_git_repo, test_data_path)
     assert file.exists_in(local_git_repo) == exists

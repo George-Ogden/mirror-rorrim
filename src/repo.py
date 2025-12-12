@@ -9,7 +9,7 @@ from .file import VersionedMirrorFile
 from .githelper import GitHelper
 from .logger import describe
 from .state import MirrorRepoState
-from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
+from .typed_path import Commit, GitDir, RelDir, RelFile, Remote
 
 
 @dataclass
@@ -52,8 +52,8 @@ class MirrorRepo:
         )
 
     @property
-    def cache(self) -> AbsDir:
-        return MIRROR_CACHE / RelDir(self.source.hash)
+    def cache(self) -> GitDir:
+        return GitDir(MIRROR_CACHE / RelDir(self.source.hash), check=False)
 
     def checkout(self) -> None:
         with describe(f"Syncing {self.source}", level="DEBUG"):
@@ -73,7 +73,7 @@ class MirrorRepo:
         for file in self.files:
             yield Diff.new_file(self.cache, file.file)
 
-    def update(self, target: AbsDir) -> None:
+    def update(self, target: GitDir) -> None:
         for diff in self.diffs():
             diff.apply(target)
 

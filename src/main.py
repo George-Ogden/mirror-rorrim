@@ -13,7 +13,7 @@ from .constants import MIRROR_FILE
 from .githelper import GitHelper
 from .installer import Installer, InstallSource
 from .logger import setup_logger
-from .typed_path import AbsDir, AbsFile, RelFile, Remote
+from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
 
 
 def check_for_errors[**P](fn: Callable[P, None]) -> Callable[P, None]:
@@ -93,5 +93,5 @@ def install(config_file: str, config_repo: str | None) -> None:
         if isinstance(source_path, AbsFile):
             source_path = RelFile(source_path.path.relative_to("/"))
         source = (source_remote, source_path)
-    installer = Installer(target=AbsDir.cwd(), source=source)
+    installer = Installer(target=GitDir.cwd(), source=source)
     installer.install()

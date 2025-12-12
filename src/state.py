@@ -19,11 +19,16 @@ if TYPE_CHECKING:
     from _typeshed import DataclassInstance, SupportsRead, SupportsWrite
 
 
-class ReadWriteableState(Protocol):
-    def dump(self, f: SupportsWrite[str]) -> None: ...
-
+class ReadableState(Protocol):
     @classmethod
     def load(cls, f: SupportsRead[str]) -> Self: ...
+
+
+class WriteableState(Protocol):
+    def dump(self, f: SupportsWrite[str]) -> None: ...
+
+
+class ReadWriteableState(ReadableState, WriteableState, Protocol): ...
 
 
 class AutoState(yaml.YAMLObject):
