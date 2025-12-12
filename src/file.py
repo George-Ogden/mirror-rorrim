@@ -1,3 +1,4 @@
+import contextlib
 from dataclasses import dataclass
 from typing import Self
 
@@ -5,7 +6,7 @@ from git import Blob, Submodule, Tree
 
 from .config import MirrorFileConfig
 from .githelper import GitHelper
-from .typed_path import AbsDir, Commit, GitDir, RelFile
+from .typed_path import Commit, GitDir, RelFile
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -17,20 +18,19 @@ class MirrorFile:
     def from_config(cls, config: MirrorFileConfig) -> Self:
         return cls(source=config.source, target=config.target)
 
-    def _git_object(self, folder: GitDir | Tree) -> Blob | Tree | Submodule | None:
-        try:
-            tree = GitHelper.tree(folder) if isinstance(folder, AbsDir) else folder
-            return tree / str(self.source.path)
-        except KeyError:
-            return None
+    def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
+        # gitpython-developers/GitPython#2094
+        with contextlib.suppress(KeyError):
+            return GitHelper.tree(folder) / str(self.source.path)
+        return None
 
-    def exists_in(self, folder: GitDir | Tree) -> bool:
+    def exists_in(self, folder: GitDir) -> bool:
         return self._git_object(folder) is not None
 
-    def is_file_in(self, folder: GitDir | Tree) -> bool:
+    def is_file_in(self, folder: GitDir) -> bool:
         return isinstance(self._git_object(folder), Blob)
 
-    def is_folder_in(self, folder: GitDir | Tree) -> bool:
+    def is_folder_in(self, folder: GitDir) -> bool:
         return isinstance(self._git_object(folder), Tree)
 
 
@@ -42,6 +42,12 @@ class VersionedMirrorFile:
     @classmethod
     def from_config(cls, config: MirrorFileConfig) -> Self:
         return cls(file=MirrorFile.from_config(config), commit=None)
+
+    def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
+        # gitpython-developers/GitPython#2094
+        with contextlib.suppress(KeyError):
+            return GitHelper.tree(folder, self.commit) / str(self.source.path)
+        return None
 
     @property
     def source(self) -> RelFile:
@@ -59,3 +65,6 @@ class VersionedMirrorFile:
 
     def is_folder_in(self, folder: GitDir) -> bool:
         return self.file.is_folder_in(folder)
+
+    def existed_in(self, folder: GitDir) -> bool:
+        return isinstance(self._git_object(folder), Blob)
