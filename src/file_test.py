@@ -1,7 +1,7 @@
 import pytest
 
 from .file import MirrorFile
-from .test_utils import quick_mirror_file
+from .test_utils import add_commit, quick_mirror_file
 from .typed_path import AbsDir, RelDir
 
 
@@ -27,7 +27,10 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
         (quick_mirror_file("folder/nested.not"), False, False),
     ],
 )
-def test_exists_in(file: MirrorFile, exists: bool, is_folder: bool, test_data_path: AbsDir) -> None:
-    assert file.exists_in(test_data_path) == exists
-    assert file.is_file_in(test_data_path) == (exists and not is_folder)
-    assert file.is_folder_in(test_data_path) == is_folder
+def test_exists_in(
+    file: MirrorFile, exists: bool, is_folder: bool, test_data_path: AbsDir, local_git_repo: AbsDir
+) -> None:
+    add_commit(local_git_repo, test_data_path)
+    assert file.exists_in(local_git_repo) == exists
+    assert file.is_file_in(local_git_repo) == (exists and not is_folder)
+    assert file.is_folder_in(local_git_repo) == is_folder

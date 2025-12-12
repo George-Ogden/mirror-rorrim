@@ -5,7 +5,7 @@ from subprocess import PIPE
 from typing import Any
 
 import git
-from git import GitCommandError, GitError, InvalidGitRepositoryError
+from git import GitCommandError, GitError, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
 from git.cmd import _AutoInterrupt as AutoInterrupt
 from loguru import logger
@@ -13,7 +13,7 @@ from loguru import logger
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
 from .logger import describe
-from .typed_path import AbsDir, RelFile, Remote
+from .typed_path import AbsDir, Commit, RelFile, Remote
 
 
 class GitHelper:
@@ -102,3 +102,7 @@ class GitHelper:
     @classmethod
     def commit(cls, local: AbsDir) -> str:
         return cls.repo(local).head.commit.hexsha
+
+    @classmethod
+    def tree(cls, local: AbsDir, commit: Commit | None = None) -> Tree:
+        return cls.repo(local).tree(None if commit is None else str(commit))

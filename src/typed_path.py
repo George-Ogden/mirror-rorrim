@@ -133,5 +133,8 @@ class Remote:
 class Commit:
     sha: str
 
+    def __str__(self) -> str:
+        return self.sha
+
 
 type PyFile = io.TextIOWrapper

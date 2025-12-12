@@ -8,6 +8,7 @@ from pytest import ExceptionInfo
 
 from .constants import MIRROR_FILE
 from .file import MirrorFile, VersionedMirrorFile
+from .githelper import GitHelper
 from .installer import Installer
 from .mirror import Mirror
 from .repo import MirrorRepo
@@ -52,9 +53,10 @@ def quick_mirror(repos: list[MirrorRepo]) -> Mirror:
     return Mirror(repos)
 
 
-def add_commit(path: AbsDir | str, files: dict[str, Any]) -> str:
+def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> str:
     path = AbsDir(path)
-    repo = git.Repo.init(path)
+    # gitpython-developers/GitPython#2085
+    repo = git.Repo.init(os.fspath(path))
 
     for file in glob(str(path.path / "*")):
         if os.path.isfile(file):
@@ -62,12 +64,19 @@ def add_commit(path: AbsDir | str, files: dict[str, Any]) -> str:
         else:
             shutil.rmtree(file)
 
-    for filename, contents in files.items():
-        filepath = path / RelFile(filename)
-        filepath.path.parent.mkdir(exist_ok=True, parents=True)
-        with open(filepath, "w") as f:
-            f.write(str(contents))
-        repo.index.add(filename)
+    if isinstance(files, AbsDir):
+        shutil.copytree(files, path, dirs_exist_ok=True)
+
+    if isinstance(files, dict):
+        for filename, contents in files.items():
+            relfile = RelFile(filename)
+            filepath = path / relfile
+            filepath.path.parent.mkdir(exist_ok=True, parents=True)
+            with open(filepath, "w") as f:
+                f.write(str(contents))
+            GitHelper.add(path, relfile)
+    else:
+        GitHelper.add(path, RelFile("."))
     try:
         num_commits = len(list(repo.iter_commits()))
     except ValueError:

@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from typing import Self
 
+from git import Blob, Submodule, Tree
+
 from .config import MirrorFileConfig
+from .githelper import GitHelper
 from .typed_path import AbsDir, Commit, RelFile
 
 
@@ -14,17 +17,21 @@ class MirrorFile:
     def from_config(cls, config: MirrorFileConfig) -> Self:
         return cls(source=config.source, target=config.target)
 
-    def exists_in(self, folder: AbsDir) -> bool:
-        path = folder / self.source
-        return path.exists()
+    def _git_object(self, folder: AbsDir | Tree) -> Blob | Tree | Submodule | None:
+        try:
+            tree = GitHelper.tree(folder) if isinstance(folder, AbsDir) else folder
+            return tree / str(self.source.path)
+        except KeyError:
+            return None
 
-    def is_file_in(self, folder: AbsDir) -> bool:
-        path = folder / self.source
-        return path.is_file()
+    def exists_in(self, folder: AbsDir | Tree) -> bool:
+        return self._git_object(folder) is not None
 
-    def is_folder_in(self, folder: AbsDir) -> bool:
-        path = folder / self.source
-        return path.is_folder()
+    def is_file_in(self, folder: AbsDir | Tree) -> bool:
+        return isinstance(self._git_object(folder), Blob)
+
+    def is_folder_in(self, folder: AbsDir | Tree) -> bool:
+        return isinstance(self._git_object(folder), Tree)
 
 
 @dataclass(frozen=True)
