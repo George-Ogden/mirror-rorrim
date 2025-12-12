@@ -8,6 +8,7 @@ from yaml import Node, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .config_parser import Parser, ParserError
+from .test_utils import normalize_message
 from .typed_path import AbsDir, RelDir, RelFile, Remote
 
 
@@ -597,18 +598,11 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
         ),
     ],
 )
-def test_parse_files(
-    filename: str, expected: MirrorConfig | Exception | str, test_data_path: AbsDir
-) -> None:
+def test_parse_files(filename: str, expected: MirrorConfig | str, test_data_path: AbsDir) -> None:
     filepath = test_data_path / RelFile(filename)
-    if isinstance(expected, str | UndecidedValue | Exception):
+    if isinstance(expected, str | UndecidedValue):
         with pytest.raises((YAMLError, OSError)) as e:
             Parser.parse_file(filepath)
-        error_msg = str(e.value)
-        file_normalized_msg = error_msg.replace(str(test_data_path.path), "TEST_DATA")
-        space_normalized_msg = " ".join(
-            line.strip() for line in file_normalized_msg.splitlines() if line.strip()
-        )
-        assert space_normalized_msg == expected
+        assert normalize_message(e, test_data_path=test_data_path) == expected
     else:
         assert Parser.parse_file(filepath) == expected

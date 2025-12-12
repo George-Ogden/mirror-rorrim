@@ -7,20 +7,23 @@ import os
 from pathlib import Path
 import re
 import typing
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Self, cast
 
 import yaml
-from yaml import MappingNode, Node, ScalarNode, SequenceNode
+from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 from yaml.constructor import ConstructorError
 
 from .typed_path import Commit, RelFile, Remote
 
 if TYPE_CHECKING:
-    from _typeshed import DataclassInstance, SupportsWrite
+    from _typeshed import DataclassInstance, SupportsRead, SupportsWrite
 
 
-class WriteableState(Protocol):
+class ReadWriteableState(Protocol):
     def dump(self, f: SupportsWrite[str]) -> None: ...
+
+    @classmethod
+    def load(cls, f: SupportsRead[str]) -> Self: ...
 
 
 class AutoState(yaml.YAMLObject):
@@ -28,6 +31,13 @@ class AutoState(yaml.YAMLObject):
 
     def dump(self, f: SupportsWrite[str]) -> None:
         f.write(yaml.safe_dump(self.representation, default_flow_style=False))
+
+    @classmethod
+    def load(cls, f: SupportsRead[str]) -> Self:
+        try:
+            return cls.construct(cls, yaml.compose(f))
+        except YAMLError as e:
+            raise YAMLError("Unable to load data from lock file.") from e
 
     @classmethod
     def represent(cls, obj: Any) -> Any:

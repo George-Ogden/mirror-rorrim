@@ -4,6 +4,7 @@ import shutil
 from typing import Any
 
 import git
+from pytest import ExceptionInfo
 
 from .constants import MIRROR_FILE
 from .file import MirrorFile, VersionedMirrorFile
@@ -73,3 +74,9 @@ def add_commit(path: AbsDir | str, files: dict[str, Any]) -> str:
         num_commits = 0
     commit = repo.index.commit(f"Commit {num_commits + 1}")
     return commit.hexsha
+
+
+def normalize_message(e: ExceptionInfo, *, test_data_path: AbsDir) -> str:
+    error_msg = str(e.value)
+    file_normalized_msg = error_msg.replace(str(test_data_path.path), "TEST_DATA")
+    return " ".join(line.strip() for line in file_normalized_msg.splitlines() if line.strip())

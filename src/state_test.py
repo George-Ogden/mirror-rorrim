@@ -4,7 +4,12 @@ import pytest
 from yaml import Node, YAMLError
 
 from .state import AutoState, MirrorRepoState, MirrorState
-from .typed_path import Commit, RelFile, Remote
+from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
+
+
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path / RelDir("state_tests")
 
 
 def quick_mirror_repo_state(source: str, commit: str, files: list[str]) -> MirrorRepoState:
@@ -205,3 +210,41 @@ def test_construct_state[T](cls: type[T], yaml_node: Node, expected: T | None) -
             AutoState.construct(cls, yaml_node)
     else:
         assert AutoState.construct(cls, yaml_node) == expected
+
+
+@pytest.mark.parametrize(
+    "filename, expected",
+    [
+        (
+            "valid.yaml",
+            quick_mirror_state(
+                [
+                    quick_mirror_repo_state(
+                        "https://github.com/George-Ogden/mirror-config",
+                        "fd0a098dfe0db14360741d3548db164c9b3d1004",
+                        [
+                            "python.gitignore",
+                            "python.pre-commit-config.yaml",
+                            "requirements-dev.txt",
+                            "requirements.txt",
+                        ],
+                    )
+                ]
+            ),
+        ),
+        (
+            "syntax_error.yaml",
+            None,
+        ),
+        ("execution.yaml", None),
+        ("missing_key.yaml", None),
+    ],
+)
+def test_load(filename: str, expected: MirrorState | None, test_data_path: AbsDir) -> None:
+    filepath = test_data_path / RelFile(filename)
+    with open(filepath) as f:
+        if expected is None:
+            with pytest.raises(YAMLError):
+                MirrorState.load(f)
+        else:
+            assert MirrorState.load(f) == expected
