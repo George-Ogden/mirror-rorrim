@@ -1,11 +1,9 @@
 import tempfile
-import textwrap
 
 import git
 from inline_snapshot import snapshot
 from inline_snapshot._snapshot.undecided_value import UndecidedValue
 import pytest
-import yaml
 from yaml import Node, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
@@ -38,12 +36,6 @@ def quick_mirror_repo_config(source: str, files: list[tuple[str, str] | str]) ->
 
 def quick_mirror_config(repos: list[MirrorRepoConfig]) -> MirrorConfig:
     return MirrorConfig(repos)
-
-
-@pytest.fixture
-def yaml_node(raw_yaml: str) -> Node:
-    raw_yaml = textwrap.dedent(raw_yaml).strip()
-    return yaml.compose(raw_yaml, Loader=yaml.SafeLoader)
 
 
 def _test_parse_body(

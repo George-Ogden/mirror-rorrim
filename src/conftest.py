@@ -2,6 +2,7 @@ from collections.abc import Generator
 import os
 from pathlib import Path
 import sys
+import textwrap
 
 import git
 from loguru import logger
@@ -11,6 +12,8 @@ from syrupy.assertion import SnapshotAssertion
 from syrupy.extensions.amber import AmberSnapshotExtension
 from syrupy.location import PyTestLocation
 from syrupy.types import SnapshotIndex
+import yaml
+from yaml import Node
 
 from .typed_path import AbsDir, AbsFile, RelDir, RelFile
 
@@ -58,3 +61,9 @@ def log_everything() -> None:
         level="TRACE",
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{file.path}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
     )
+
+
+@pytest.fixture
+def yaml_node(raw_yaml: str) -> Node:
+    raw_yaml = textwrap.dedent(raw_yaml).strip()
+    return yaml.compose(raw_yaml, Loader=yaml.SafeLoader)

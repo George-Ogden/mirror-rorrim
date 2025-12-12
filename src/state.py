@@ -4,14 +4,19 @@ from collections.abc import Sequence
 import dataclasses
 from dataclasses import dataclass
 import os
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from pathlib import Path
+import re
+import typing
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import yaml
+from yaml import MappingNode, Node, ScalarNode, SequenceNode
+from yaml.constructor import ConstructorError
 
 from .typed_path import Commit, RelFile, Remote
 
 if TYPE_CHECKING:
-    from _typeshed import SupportsWrite
+    from _typeshed import DataclassInstance, SupportsWrite
 
 
 class WriteableState(Protocol):
@@ -47,6 +52,79 @@ class AutoState(yaml.YAMLObject):
     @property
     def representation(self) -> Any:
         return self.represent(self)
+
+    @classmethod
+    def construct[T](cls, obj_cls: type[T] | str, node: Node) -> T:
+        if dataclasses.is_dataclass(obj_cls):
+            return cls._construct_dataclass(obj_cls, node)
+        if cls.is_cls(obj_cls, str):
+            return cast(T, cls._construct_str(node))
+        if cls.is_cls(obj_cls, Path):
+            return cast(T, Path(cls.construct(str, node)))
+        if cls.is_cls(typing.get_origin(obj_cls), Sequence):
+            return cls._construct_sequence(cast(type[T], obj_cls), node)  # type: ignore[type-var]
+        if isinstance(obj_cls, str):
+            return cls._construct_named_cls(obj_cls, node)
+        raise ConstructorError()
+
+    @classmethod
+    def _construct_dataclass[T: DataclassInstance](cls, obj_cls: type[T], node: Node) -> T:
+        fields = dataclasses.fields(obj_cls)
+        try:
+            [field] = fields
+        except ValueError:
+            if isinstance(node, MappingNode):
+                node_values = {cls._construct_str(key): value for key, value in node.value}
+                if node_values.keys() == {field.name for field in fields}:
+                    return obj_cls(
+                        **{
+                            field.name: cls.construct(field.type, node_values[field.name])
+                            for field in fields
+                        }
+                    )
+            raise ConstructorError() from None
+        return obj_cls(**{field.name: cls.construct(field.type, node)})
+
+    @classmethod
+    def _construct_str(cls, node: Node) -> str:
+        if isinstance(node, ScalarNode) and isinstance(node.value, str):
+            return node.value
+        raise ConstructorError()
+
+    @classmethod
+    def _construct_sequence[T: Sequence](cls, obj_cls: type[T], node: Node) -> T:
+        [item_cls] = typing.get_args(obj_cls)
+        if isinstance(node, SequenceNode):
+            return cast(T, [cls.construct(item_cls, item_node) for item_node in node.value])
+        raise ConstructorError()
+
+    @classmethod
+    def _construct_named_cls(cls, type_name: str, node: Node) -> Any:
+        return cls.construct(cls._named_type(type_name), node)
+
+    @classmethod
+    def _named_type(cls, type_name: str) -> type:
+        name, arg = cls._type_origin_and_arg(type_name)
+        return cls._lookup_type(name, arg)
+
+    @classmethod
+    def _type_origin_and_arg(cls, type_name: str) -> tuple[str, str]:
+        match = re.match(r"^(.*?)(\[(.*)\]|)$", type_name)
+        if match is None:
+            raise ConstructorError()
+        name, param = match.group(1), match.group(3)
+        return name, param
+
+    @classmethod
+    def _lookup_type(cls, type_name: str, param_name: str) -> type:
+        named_cls = globals()[type_name]
+        if param_name:
+            named_cls = named_cls[globals()[param_name]]
+        return named_cls
+
+    @classmethod
+    def is_cls(cls, obj_cls: type | str | None, expected_cls: type) -> bool:
+        return obj_cls is not None and (obj_cls is expected_cls or obj_cls == expected_cls.__name__)
 
 
 @dataclass(frozen=True, slots=True)
