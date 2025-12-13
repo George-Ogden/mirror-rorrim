@@ -1,7 +1,7 @@
 from glob import glob
 import os
 import shutil
-from typing import Any
+from typing import Any, overload
 
 import git
 from pytest import ExceptionInfo
@@ -12,7 +12,7 @@ from .githelper import GitHelper
 from .installer import Installer
 from .mirror import Mirror
 from .repo import MirrorRepo
-from .typed_path import AbsDir, GitDir, RelFile, Remote
+from .typed_path import AbsDir, Commit, GitDir, RelFile, Remote
 
 
 def quick_installer(
@@ -34,16 +34,45 @@ def quick_mirror_file(source: str | RelFile, target: RelFile | str | None = None
     return MirrorFile(source=RelFile(source), target=RelFile(target))
 
 
+@overload
+def quick_versioned_mirror_file(
+    source: str | RelFile, target: RelFile | str | None = None, commit: Commit | str | None = None
+) -> VersionedMirrorFile: ...
+@overload
+def quick_versioned_mirror_file(source: str | RelFile, commit: Commit) -> VersionedMirrorFile: ...
+
+
+def quick_versioned_mirror_file(  # type: ignore [misc]
+    source: str | RelFile,
+    target: RelFile | str | None | Commit = None,
+    commit: Commit | str | None = None,
+) -> VersionedMirrorFile:
+    if isinstance(target, Commit):
+        commit = target
+        target = None
+    if target is None:
+        target = source
+    return VersionedMirrorFile(
+        MirrorFile(source=RelFile(source), target=RelFile(target)),
+        commit=None if commit is None else commit if isinstance(commit, Commit) else Commit(commit),
+    )
+
+
 def quick_mirror_repo(
-    source: str | AbsDir, files: list[tuple[str | RelFile, str | RelFile] | str | RelFile]
+    source: str | AbsDir,
+    files: list[
+        tuple[str | RelFile, str | RelFile | Commit]
+        | tuple[str | RelFile, str | RelFile, str | Commit]
+        | str
+        | RelFile
+    ],
 ) -> MirrorRepo:
     return MirrorRepo(
         source=Remote(os.fspath(source)),
         files=[
-            VersionedMirrorFile(
-                quick_mirror_file(*file) if isinstance(file, tuple) else quick_mirror_file(file),
-                commit=None,
-            )
+            quick_versioned_mirror_file(*file)
+            if isinstance(file, tuple)
+            else quick_versioned_mirror_file(file)
             for file in files
         ],
     )
@@ -53,7 +82,7 @@ def quick_mirror(repos: list[MirrorRepo]) -> Mirror:
     return Mirror(repos)
 
 
-def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> str:
+def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> Commit:
     # gitpython-developers/GitPython#2085
     repo = git.Repo.init(os.fspath(path))
     path = GitDir(path)
@@ -82,10 +111,15 @@ def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None)
     except ValueError:
         num_commits = 0
     commit = repo.index.commit(f"Commit {num_commits + 1}")
-    return commit.hexsha
+    return Commit(commit.hexsha)
 
 
-def normalize_message(e: ExceptionInfo, *, test_data_path: AbsDir) -> str:
-    error_msg = str(e.value)
-    file_normalized_msg = error_msg.replace(str(test_data_path.path), "TEST_DATA")
-    return " ".join(line.strip() for line in file_normalized_msg.splitlines() if line.strip())
+def normalize_message(
+    e: ExceptionInfo | str, *, test_data_path: AbsDir | None = None, git_dir: AbsDir | None = None
+) -> str:
+    error_msg = e if isinstance(e, str) else str(e.value)
+    if test_data_path is not None:
+        error_msg = error_msg.replace(os.fspath(test_data_path), "TEST_DATA")
+    if git_dir is not None:
+        error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
+    return " ".join(line.strip() for line in error_msg.splitlines() if line.strip())

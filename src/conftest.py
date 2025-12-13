@@ -7,7 +7,7 @@ import textwrap
 import git
 from loguru import logger
 import pytest
-from pytest import FixtureRequest
+from pytest import FixtureRequest, LogCaptureFixture
 from syrupy.assertion import SnapshotAssertion
 from syrupy.extensions.amber import AmberSnapshotExtension
 from syrupy.location import PyTestLocation
@@ -61,6 +61,12 @@ def log_everything() -> None:
         level="TRACE",
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{file.path}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
     )
+
+
+@pytest.fixture
+def log_cleanly(caplog: LogCaptureFixture, log_level: str) -> None:
+    logger.remove()
+    logger.add(caplog.handler, level=log_level, colorize=False, format="{message}")
 
 
 @pytest.fixture

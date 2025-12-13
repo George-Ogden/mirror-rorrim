@@ -3,21 +3,13 @@ from collections.abc import Callable
 import pytest
 
 from .file import MirrorFile, VersionedMirrorFile
-from .test_utils import add_commit, quick_mirror_file
-from .typed_path import AbsDir, Commit, GitDir, RelDir, RelFile
+from .test_utils import add_commit, quick_mirror_file, quick_versioned_mirror_file
+from .typed_path import AbsDir, GitDir, RelDir
 
 
 @pytest.fixture
 def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("file_tests")
-
-
-def quick_versioned_mirror_file(
-    source: str | RelFile, target: RelFile | str | None = None, commit: str | None = None
-) -> VersionedMirrorFile:
-    return VersionedMirrorFile(
-        quick_mirror_file(source, target), None if commit is None else Commit(commit)
-    )
 
 
 @pytest.mark.parametrize(

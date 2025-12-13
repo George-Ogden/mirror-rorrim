@@ -2,6 +2,8 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Self
 
+from loguru import logger
+
 from .config import MirrorRepoConfig
 from .constants import MIRROR_CACHE
 from .diff import Diff
@@ -68,6 +70,20 @@ class MirrorRepo:
                 raise IsADirectoryError(self.source, file.source)
             if not file.is_file_in(self.cache):
                 raise IrregularFileError(self.source, file.source)
+
+    def all_up_to_date(self) -> bool:
+        return all([self.up_to_date(file) for file in self.files])
+
+    def up_to_date(self, file: VersionedMirrorFile) -> bool:
+        up_to_date = self.commit == file.commit
+        if not up_to_date:
+            if file.commit is None:
+                logger.info(f"{file.source!s} has not been mirrored from the {self.source}.")
+            else:
+                logger.info(
+                    f"{file.source!s} has commit {file.commit}, but {self.source} has commit {self.commit}."
+                )
+        return up_to_date
 
     def diffs(self) -> Iterable[Diff]:
         for file in self.files:
