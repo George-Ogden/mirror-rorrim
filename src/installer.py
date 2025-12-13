@@ -53,7 +53,7 @@ class Installer:
 
     @functools.cached_property
     def mirror(self) -> Mirror:
-        return Mirror.from_config(self.load_config())
+        return Mirror.from_config(self.load_config(), state=None)
 
     def load_config(self) -> MirrorConfig:
         if self.source_repo is None:

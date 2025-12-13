@@ -131,6 +131,9 @@ class Remote:
 
     @property
     def canonical(self) -> str:
+        if os.path.exists(self):
+            # Distinguish common relative paths (eg ".").
+            return os.path.realpath(self)
         return self._without_trailing_slashes()
 
     def _without_trailing_slashes(self) -> str:

@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from pathlib import Path
+import os
 import tempfile
 
 from inline_snapshot import snapshot
@@ -10,6 +10,7 @@ from syrupy.assertion import SnapshotAssertion
 from .config_parser import Parser
 from .constants import MIRROR_LOCK
 from .mirror import Mirror
+from .state import MirrorState
 from .test_utils import add_commit, normalize_message, quick_mirror, quick_mirror_repo
 from .typed_path import AbsDir, RelDir, RelFile
 
@@ -56,14 +57,62 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
                 ]
             ),
         ),
+        (
+            "trivial_state",
+            quick_mirror(
+                [
+                    quick_mirror_repo(
+                        "https://github.com/George-Ogden/mypy-pytest",
+                        ["pyproject.toml", ("requirements-dev.txt", "requirements.txt")],
+                    ),
+                ]
+            ),
+        ),
+        (
+            "complex_state",
+            quick_mirror(
+                [
+                    quick_mirror_repo(
+                        "https://github.com/George-Ogden/mypy-pytest",
+                        ["pyproject.toml", ("requirements-dev.txt", "requirements.txt")],
+                    ),
+                    quick_mirror_repo(
+                        "git@github.com:George-Ogden/actions.git",
+                        [
+                            (
+                                ".github/workflows/python-release.yaml",
+                                ".github/workflows/release.yaml",
+                                "abc123",
+                            ),
+                            (
+                                ".github/workflows/python-test.yaml",
+                                ".github/workflows/test.yaml",
+                                "abc123",
+                            ),
+                            (
+                                ".github/workflows/lint.yaml",
+                                ".github/workflows/lint.yaml",
+                            ),
+                        ],
+                    ),
+                ]
+            ),
+        ),
     ],
 )
 def test_mirror_from_config(
     config_name: str, expected: Mirror, global_test_data_path: AbsDir
 ) -> None:
-    config_path = global_test_data_path / RelFile(Path("config_tests") / f"{config_name}.yaml")
+    config_dir = global_test_data_path / RelDir("config_tests")
+    config_path = config_dir / RelFile(f"{config_name}.config.yaml")
+    state_path = config_dir / RelFile(f"{config_name}.state.yaml")
     config = Parser.parse_file(config_path)
-    assert Mirror.from_config(config) == expected
+    if os.path.exists(state_path):
+        with open(state_path) as f:
+            state = MirrorState.load(f)
+    else:
+        state = None
+    assert Mirror.from_config(config, state) == expected
 
 
 def multiple_repos_local_test_case() -> Mirror:

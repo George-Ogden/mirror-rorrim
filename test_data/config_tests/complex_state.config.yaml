@@ -1,0 +1,10 @@
+repos:
+  - source: https://github.com/George-Ogden/mypy-pytest
+    files:
+      - pyproject.toml
+      - requirements.txt: requirements-dev.txt
+  - source: git@github.com:George-Ogden/actions.git
+    files:
+      - .github/workflows/release.yaml: .github/workflows/python-release.yaml
+      - .github/workflows/test.yaml: .github/workflows/python-test.yaml
+      - .github/workflows/lint.yaml: .github/workflows/lint.yaml

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
@@ -21,8 +22,14 @@ class Mirror:
     repos: Sequence[MirrorRepo]
 
     @classmethod
-    def from_config(cls, config: MirrorConfig) -> Self:
-        return cls([MirrorRepo.from_config(sub_config, None) for sub_config in config.repos])
+    def from_config(cls, config: MirrorConfig, state: MirrorState | None) -> Self:
+        index = defaultdict(lambda: None) if state is None else state.index
+        return cls(
+            [
+                MirrorRepo.from_config(sub_config, index[sub_config.source.canonical])
+                for sub_config in config.repos
+            ]
+        )
 
     def __iter__(self) -> Iterator[MirrorRepo]:
         return iter(self.repos)

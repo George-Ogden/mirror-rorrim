@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections import defaultdict
+from collections.abc import Iterator, Mapping, Sequence
 import dataclasses
 from dataclasses import dataclass
 import os
@@ -161,6 +162,15 @@ class MirrorState(AutoState):
         if not all_unique(repo.source.canonical for repo in self.repos):
             raise ValueError("Expected all sources to be unique.")
 
+    def __iter__(self) -> Iterator[MirrorRepoState]:
+        return iter(self.repos)
+
     def dump(self, f: SupportsWrite[str]) -> None:
         f.write(f"# {self.LOCK_COMMENT}\n")
         AutoState.dump(self, f)
+
+    @property
+    def index(self) -> Mapping[str, None | MirrorRepoState]:
+        return defaultdict(
+            lambda: None, {sub_state.source.canonical: sub_state for sub_state in self}
+        )
