@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, cast
 
 from loguru import logger
 
@@ -47,10 +47,20 @@ class MirrorRepo:
     files: Sequence[VersionedMirrorFile]
 
     @classmethod
-    def from_config(cls, config: MirrorRepoConfig) -> Self:
+    def from_config(cls, config: MirrorRepoConfig, state: MirrorRepoState | None) -> Self:
+        assert state is None or config.source.canonical == state.source.canonical
+        versioned_filepaths = set() if state is None else set(state.files)
         return cls(
             config.source,
-            [VersionedMirrorFile.from_config(subconfig) for subconfig in config.files],
+            [
+                VersionedMirrorFile.from_config(
+                    subconfig,
+                    commit=cast(MirrorRepoState, state).commit
+                    if subconfig.source in versioned_filepaths
+                    else None,
+                )
+                for subconfig in config.files
+            ],
         )
 
     @property

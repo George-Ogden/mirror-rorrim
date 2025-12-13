@@ -40,8 +40,8 @@ class VersionedMirrorFile:
     commit: Commit | None
 
     @classmethod
-    def from_config(cls, config: MirrorFileConfig) -> Self:
-        return cls(file=MirrorFile.from_config(config), commit=None)
+    def from_config(cls, config: MirrorFileConfig, commit: Commit | None) -> Self:
+        return cls(MirrorFile.from_config(config), commit)
 
     def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
         # gitpython-developers/GitPython#2094

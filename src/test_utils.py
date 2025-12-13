@@ -13,6 +13,7 @@ from .githelper import GitHelper
 from .installer import Installer
 from .mirror import Mirror
 from .repo import MirrorRepo
+from .state import MirrorRepoState, MirrorState
 from .typed_path import AbsDir, Commit, GitDir, RelFile, Remote
 
 
@@ -81,6 +82,14 @@ def quick_mirror_repo(
 
 def quick_mirror(repos: list[MirrorRepo]) -> Mirror:
     return Mirror(repos)
+
+
+def quick_mirror_repo_state(source: str, commit: str, files: list[str]) -> MirrorRepoState:
+    return MirrorRepoState(Remote(source), Commit(commit), [RelFile(file) for file in files])
+
+
+def quick_mirror_state(mirror_repos: list[MirrorRepoState]) -> MirrorState:
+    return MirrorState(mirror_repos)
 
 
 def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> Commit:

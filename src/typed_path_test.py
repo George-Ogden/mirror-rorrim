@@ -91,7 +91,7 @@ def test_path_properties(
             True,
         ),
         # equivalent files
-        ("a/../b", "b/", True),
+        ("a/", "a", True),
         # equivalent urls
         (
             "https://github.com/George-Ogden/mypy-pytest",

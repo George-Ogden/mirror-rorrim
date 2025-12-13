@@ -2,7 +2,7 @@
 # name: test_mirror_state[mirror0-single]
   '''
   # DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.
-  - commit: b1b9de41ddd9cce6fa0dc5766d9f669548f06082
+  - commit: abc151a1e2338412497566cddc88e0b5f1dde2fe
     files:
     - pyproject.toml
     source: https://github.com/George-Ogden/dbg

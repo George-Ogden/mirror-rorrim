@@ -6,6 +6,7 @@ import hashlib
 import io
 import os.path
 from pathlib import Path
+import re
 from typing import Self, overload
 
 
@@ -130,7 +131,13 @@ class Remote:
 
     @property
     def canonical(self) -> str:
-        return os.path.realpath(self)
+        return self._without_trailing_slashes()
+
+    def _without_trailing_slashes(self) -> str:
+        strip_trailing_slash_pattern = r"^(.*?)\/*$"
+        match = re.match(strip_trailing_slash_pattern, self.repo)
+        assert match is not None
+        return match.group(1)
 
     @functools.cached_property
     def hash(self) -> str:

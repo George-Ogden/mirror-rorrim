@@ -2,6 +2,7 @@ import functools
 import os
 import shutil
 from subprocess import PIPE
+import traceback
 from typing import Any
 
 import git
@@ -51,13 +52,14 @@ class GitHelper:
                     shutil.rmtree(local, ignore_errors=True)
                     cls._clone(remote, local)
             except Exception as e:
+                traceback.print_exc()
                 logger.debug(e)
                 raise GitError(f"Unable to checkout {remote}.") from None
 
     @classmethod
     def _clone(cls, remote: Remote, local: AbsDir) -> None:
         with describe(f"Cloning {remote} into {local}", error_level="DEBUG"):
-            GitRepo.clone_from(os.fspath(remote), os.fspath(local))
+            GitRepo.clone_from(remote.canonical, os.fspath(local))
 
     @classmethod
     def _sync(cls, local: GitDir) -> None:

@@ -4,20 +4,13 @@ import pytest
 from yaml import Node, YAMLError
 
 from .state import AutoState, MirrorRepoState, MirrorState
+from .test_utils import quick_mirror_repo_state, quick_mirror_state
 from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
 
 
 @pytest.fixture
 def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("state_tests")
-
-
-def quick_mirror_repo_state(source: str, commit: str, files: list[str]) -> MirrorRepoState:
-    return MirrorRepoState(Remote(source), Commit(commit), [RelFile(file) for file in files])
-
-
-def quick_mirror_state(mirror_repos: list[MirrorRepoState]) -> MirrorState:
-    return MirrorState(mirror_repos)
 
 
 @pytest.mark.parametrize(
@@ -238,13 +231,14 @@ def test_construct_state[T](cls: type[T], yaml_node: Node, expected: T | None) -
         ),
         ("execution.yaml", None),
         ("missing_key.yaml", None),
+        ("duplicate_source.yaml", None),
     ],
 )
 def test_load(filename: str, expected: MirrorState | None, test_data_path: AbsDir) -> None:
     filepath = test_data_path / RelFile(filename)
     with open(filepath) as f:
         if expected is None:
-            with pytest.raises(YAMLError):
+            with pytest.raises((YAMLError, ValueError)):
                 MirrorState.load(f)
         else:
             assert MirrorState.load(f) == expected

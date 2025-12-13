@@ -22,7 +22,7 @@ class Mirror:
 
     @classmethod
     def from_config(cls, config: MirrorConfig) -> Self:
-        return cls([MirrorRepo.from_config(sub_config) for sub_config in config.repos])
+        return cls([MirrorRepo.from_config(sub_config, None) for sub_config in config.repos])
 
     def __iter__(self) -> Iterator[MirrorRepo]:
         return iter(self.repos)

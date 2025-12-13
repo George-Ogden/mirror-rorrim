@@ -12,10 +12,17 @@ import pytest
 from pytest import LogCaptureFixture
 from syrupy.assertion import SnapshotAssertion
 
+from .config import MirrorRepoConfig
+from .config_parser_test import quick_mirror_repo_config
 from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
 from .state import MirrorRepoState
-from .test_utils import add_commit, normalize_message, quick_mirror_repo
+from .test_utils import (
+    add_commit,
+    normalize_message,
+    quick_mirror_repo,
+    quick_mirror_repo_state,
+)
 from .typed_path import AbsDir, Commit, GitDir, RelDir, RelFile, Remote
 
 
@@ -257,3 +264,40 @@ def test_all_up_to_date(
     else:
         assert log_message == expected_message
         assert log_message.endswith(".")
+
+
+@pytest.mark.parametrize(
+    "config, state, expected",
+    [
+        # no state
+        (
+            quick_mirror_repo_config("sauce", ["file1", ("file2", "file3")]),
+            None,
+            quick_mirror_repo("sauce", ["file1", ("file2", "file3")]),
+        ),
+        # fully covering state
+        (
+            quick_mirror_repo_config("sauce", ["file1", ("file2", "file3")]),
+            quick_mirror_repo_state("sauce", "commitabcdef", ["file1", "file2", "file3"]),
+            quick_mirror_repo(
+                "sauce", [("file1", Commit("commitabcdef")), ("file2", "file3", "commitabcdef")]
+            ),
+        ),
+        # partially covering state
+        (
+            quick_mirror_repo_config("sauce", ["file1", ("file2", "file3")]),
+            quick_mirror_repo_state("sauce", "commitabcdef", ["file1", "file3"]),
+            quick_mirror_repo("sauce", [("file1", Commit("commitabcdef")), ("file2", "file3")]),
+        ),
+        # different canonical paths
+        (
+            quick_mirror_repo_config("https://myrepo.com/", ["file1", "file2"]),
+            quick_mirror_repo_state("https://myrepo.com", "abc123", ["file1", "file3"]),
+            quick_mirror_repo("https://myrepo.com/", [("file1", Commit("abc123")), ("file2")]),
+        ),
+    ],
+)
+def test_repo_from_config(
+    config: MirrorRepoConfig, state: MirrorRepoState | None, expected: MirrorRepo
+) -> None:
+    assert MirrorRepo.from_config(config, state) == expected

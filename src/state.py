@@ -14,6 +14,7 @@ from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 from yaml.constructor import ConstructorError
 
 from .typed_path import Commit, RelFile, Remote
+from .utils import all_unique
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance, SupportsRead, SupportsWrite
@@ -155,6 +156,10 @@ class MirrorState(AutoState):
         "DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly."
     )
     repos: Sequence[MirrorRepoState]
+
+    def __post_init__(self) -> None:
+        if not all_unique(repo.source.canonical for repo in self.repos):
+            raise ValueError("Expected all sources to be unique.")
 
     def dump(self, f: SupportsWrite[str]) -> None:
         f.write(f"# {self.LOCK_COMMENT}\n")
