@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
-from typing import cast
 from unittest import mock
 
 import git
@@ -224,11 +223,7 @@ def all_but_missing_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
     return quick_mirror_repo(git_dir, [("file1", commit), ("file2", "file3", commit), "file4"])
 
 
-@pytest.fixture
-def log_level() -> str:
-    return "INFO"
-
-
+@pytest.mark.parametrize("log_level", ["INFO"])
 @pytest.mark.parametrize(
     "setup, expected_message",
     [
@@ -242,7 +237,7 @@ def log_level() -> str:
         ),
         (
             all_but_missing_up_to_date_test_case,
-            snapshot("'file4' has not been mirrored from the 'GIT_DIR'."),
+            snapshot("'file4' has not been mirrored from 'GIT_DIR'."),
         ),
     ],
 )
@@ -257,8 +252,6 @@ def test_all_up_to_date(
     GitHelper.checkout(repo.source, repo.cache)
     assert repo.all_up_to_date() == (expected_message is None)
     log_message = normalize_message(caplog.text.strip(), git_dir=local_git_repo)
-    for commit in GitHelper.repo(local_git_repo).iter_commits():
-        log_message = log_message.replace(commit.hexsha, cast(str, commit.message))
     if expected_message is None:
         assert log_message == ""
     else:

@@ -78,7 +78,7 @@ class MirrorRepo:
         up_to_date = self.commit == file.commit
         if not up_to_date:
             if file.commit is None:
-                logger.info(f"{file.source!s} has not been mirrored from the {self.source}.")
+                logger.info(f"{file.source!s} has not been mirrored from {self.source}.")
             else:
                 logger.info(
                     f"{file.source!s} has commit {file.commit}, but {self.source} has commit {self.commit}."

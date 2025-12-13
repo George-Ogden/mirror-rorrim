@@ -1,7 +1,8 @@
+from collections.abc import Sequence
 from glob import glob
 import os
 import shutil
-from typing import Any, overload
+from typing import Any, cast, overload
 
 import git
 from pytest import ExceptionInfo
@@ -115,11 +116,18 @@ def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None)
 
 
 def normalize_message(
-    e: ExceptionInfo | str, *, test_data_path: AbsDir | None = None, git_dir: AbsDir | None = None
+    e: ExceptionInfo | str,
+    *,
+    test_data_path: AbsDir | None = None,
+    git_dir: Sequence[AbsDir] | AbsDir | None = None,
 ) -> str:
     error_msg = e if isinstance(e, str) else str(e.value)
     if test_data_path is not None:
         error_msg = error_msg.replace(os.fspath(test_data_path), "TEST_DATA")
     if git_dir is not None:
-        error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
+        git_dirs = [git_dir] if isinstance(git_dir, AbsDir) else git_dir
+        for git_dir in git_dirs:
+            error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
+            for commit in GitHelper.repo(git_dir).iter_commits():
+                error_msg = error_msg.replace(commit.hexsha, cast(str, commit.message))
     return " ".join(line.strip() for line in error_msg.splitlines() if line.strip())
