@@ -8,7 +8,7 @@ import time
 from typing import ClassVar, Self
 
 from .constants import MIRROR_NAME
-from .state import WriteableState
+from .state import ReadableState, WriteableState
 from .typed_path import AbsFile, PyFile
 
 
@@ -48,9 +48,18 @@ class FileSystemLock:
 
     def unlock(self, state: WriteableState) -> None:
         try:
-            state.dump(self.file)
+            self.dump(state)
         finally:
             self.release()
+
+    def dump(self, state: WriteableState) -> None:
+        self.file.seek(0)
+        state.dump(self.file)
+        self.file.truncate()
+
+    def load[T: ReadableState](self, loader: type[T]) -> T:
+        self.file.seek(0)
+        return loader.load(self.file)
 
 
 @dataclass(frozen=True)

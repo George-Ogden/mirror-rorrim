@@ -1,20 +1,32 @@
-import contextlib
 import os
-import shutil
 from unittest import mock
 
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from .constants import MIRROR_FILE, MIRROR_LOCK
+from .constants import MIRROR_FILE
+from .installer import MirrorInstaller
 from .repo import MirrorRepo
-from .test_utils import add_commit, quick_installer, quick_mirror_repo
-from .typed_path import AbsDir, GitDir, RelDir, RelFile
+from .test_utils import quick_mirror_repo, setup_repo, snapshot_of_repo
+from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
 
 
 @pytest.fixture
 def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("installer_tests")
+
+
+def quick_installer(
+    target: None | str | AbsDir, remote: tuple[str | None | Remote, str | RelFile | None] | None
+) -> MirrorInstaller:
+    source_remote, source_path = remote or (None, None)
+    source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
+    source_path = RelFile(source_path or MIRROR_FILE)
+    source = source_path if source_remote is None else (source_remote, source_path)
+    return MirrorInstaller(
+        source=source,
+        target=GitDir(target or AbsDir.cwd()),
+    )
 
 
 @pytest.mark.parametrize(
@@ -64,24 +76,9 @@ def test_installer_install(
     snapshot: SnapshotAssertion,
 ) -> None:
     installer = quick_installer(local_git_repo, source)
-    add_commit(local_git_repo, None)
-    with contextlib.suppress(FileNotFoundError):
-        add_commit(local_git_repo, test_data_path / RelDir(test_name))
-        shutil.copytree(test_data_path / RelDir(test_name), local_git_repo, dirs_exist_ok=True)
+    setup_repo(local_git_repo, test_data_path / RelDir(test_name))
 
     if isinstance(installer.source, RelFile):
         object.__setattr__(installer, "source", local_git_repo / installer.source)
     installer.install()
-
-    repo_contents = {}
-    for folder, _, filenames in local_git_repo.path.walk():
-        if ".git" in os.fspath(folder):
-            continue
-        for filename in filenames:
-            filepath = RelDir(folder) / RelFile(filename)
-            if RelFile(filename) == MIRROR_LOCK:
-                assert os.path.getsize(filepath) > 0
-                continue
-            with open(filepath) as f:
-                repo_contents[os.fspath((folder / filename).relative_to(local_git_repo))] = f.read()
-    assert repo_contents == snapshot
+    assert snapshot_of_repo(local_git_repo, include_lockfile=False) == snapshot

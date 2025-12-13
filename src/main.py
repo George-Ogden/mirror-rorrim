@@ -11,7 +11,7 @@ from loguru import logger
 
 from .constants import MIRROR_FILE
 from .githelper import GitHelper
-from .installer import Installer, InstallSource
+from .installer import InstallSource, MirrorInstaller
 from .logger import setup_logger
 from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
 
@@ -93,5 +93,5 @@ def install(config_file: str, config_repo: str | None) -> None:
         if isinstance(source_path, AbsFile):
             source_path = RelFile(source_path.path.relative_to("/"))
         source = (source_remote, source_path)
-    installer = Installer(target=GitDir.cwd(), source=source)
+    installer = MirrorInstaller(target=GitDir.cwd(), source=source)
     installer.install()

@@ -1,54 +1,32 @@
 import contextlib
 from dataclasses import dataclass
 import functools
-import os
 import shutil
 from typing import cast
 
 from .config import MirrorConfig
 from .config_parser import Parser
-from .constants import MIRROR_FILE, MIRROR_LOCK
+from .constants import MIRROR_FILE
 from .file import MirrorFile, VersionedMirrorFile
-from .githelper import GitHelper
-from .lock import FileSystemLock
 from .logger import describe
+from .manager import MirrorManager
 from .mirror import Mirror
 from .repo import MirrorRepo
-from .state import MirrorState
-from .typed_path import AbsFile, GitDir, RelFile, Remote
+from .typed_path import AbsFile, RelFile, Remote
 
 type InstallSource = AbsFile | RelFile | tuple[Remote, RelFile]
 
 
 @dataclass(frozen=True)
-class Installer:
-    target: GitDir
+class MirrorInstaller(MirrorManager):
     source: InstallSource
 
     def install(self) -> None:
-        lock = self.lock()
-        try:
-            self._install()
-            lock.unlock(self.state)
-            GitHelper.add(self.target, MIRROR_LOCK, MIRROR_FILE)
-        except BaseException as e:
-            os.remove(self.target / MIRROR_LOCK)
-            raise e from e
-
-    def lock(self) -> FileSystemLock:
-        return FileSystemLock.create(self.lock_file)
-
-    @property
-    def lock_file(self) -> AbsFile:
-        return self.target / MIRROR_LOCK
+        self._run(self._install, keep_lock_on_failure=False)
 
     def _install(self) -> None:
         self.checkout_all()
         self.update_all()
-
-    @describe("Syncing all repos", level="INFO")
-    def checkout_all(self) -> None:
-        self.mirror.checkout_all()
 
     @functools.cached_property
     def mirror(self) -> Mirror:
@@ -93,12 +71,11 @@ class Installer:
                 return cast(RelFile, path)
         return cast(RelFile | AbsFile, self.source)
 
-    @describe("Updating all files", level="INFO")
-    def update_all(self) -> None:
+    def _update_all(self) -> None:
         self.copy_mirror_file()
         if self.source_repo is not None:
             self.source_repo.update(self.target)
-        self.mirror.update_all(self.target)
+        super()._update_all()
 
     def copy_mirror_file(self) -> None:
         with contextlib.suppress(shutil.SameFileError):
@@ -109,7 +86,3 @@ class Installer:
                     self.source_repo.cache / cast(RelFile, self.source_path),
                     self.target / MIRROR_FILE,
                 )
-
-    @property
-    def state(self) -> MirrorState:
-        return self.mirror.state

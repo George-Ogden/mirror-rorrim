@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+import contextlib
 from glob import glob
 import os
 import shutil
@@ -7,27 +8,13 @@ from typing import Any, cast, overload
 import git
 from pytest import ExceptionInfo
 
-from .constants import MIRROR_FILE
+from .constants import MIRROR_LOCK
 from .file import MirrorFile, VersionedMirrorFile
 from .githelper import GitHelper
-from .installer import Installer
 from .mirror import Mirror
 from .repo import MirrorRepo
 from .state import MirrorRepoState, MirrorState
-from .typed_path import AbsDir, Commit, GitDir, RelFile, Remote
-
-
-def quick_installer(
-    target: None | str | AbsDir, remote: tuple[str | None | Remote, str | RelFile | None] | None
-) -> Installer:
-    source_remote, source_path = remote or (None, None)
-    source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
-    source_path = RelFile(source_path or MIRROR_FILE)
-    source = source_path if source_remote is None else (source_remote, source_path)
-    return Installer(
-        source=source,
-        target=GitDir(target or AbsDir.cwd()),
-    )
+from .typed_path import AbsDir, Commit, GitDir, RelDir, RelFile, Remote
 
 
 def quick_mirror_file(source: str | RelFile, target: RelFile | str | None = None) -> MirrorFile:
@@ -140,3 +127,25 @@ def normalize_message(
             for commit in GitHelper.repo(git_dir).iter_commits():
                 error_msg = error_msg.replace(commit.hexsha, cast(str, commit.message))
     return " ".join(line.strip() for line in error_msg.splitlines() if line.strip())
+
+
+def setup_repo(git_dir: GitDir, data_path: AbsDir) -> None:
+    add_commit(git_dir, None)
+    with contextlib.suppress(FileNotFoundError):
+        add_commit(git_dir, data_path)
+        shutil.copytree(data_path, git_dir, dirs_exist_ok=True)
+
+
+def snapshot_of_repo(git_dir: GitDir, *, include_lockfile: bool) -> dict[str, str]:
+    repo_contents = {}
+    for folder, _, filenames in git_dir.path.walk():
+        if ".git" in os.fspath(folder):
+            continue
+        for filename in filenames:
+            filepath = RelDir(folder) / RelFile(filename)
+            if not include_lockfile and RelFile(filename) == MIRROR_LOCK:
+                assert os.path.getsize(filepath) > 0
+                continue
+            with open(filepath) as f:
+                repo_contents[os.fspath((folder / filename).relative_to(git_dir))] = f.read()
+    return repo_contents
