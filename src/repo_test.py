@@ -239,7 +239,7 @@ def all_but_missing_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
         (
             none_up_to_date_test_case,
             snapshot(
-                "'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2. 'file2' has commit Commit 1, but 'GIT_DIR' has commit Commit 2. 'file3' has commit Commit 1, but 'GIT_DIR' has commit Commit 2."
+                "'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file2' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file3' has commit Commit 1, but 'GIT_DIR' has commit Commit 2."
             ),
         ),
         (
@@ -258,7 +258,7 @@ def test_all_up_to_date(
     repo = setup(local_git_repo)
     GitHelper.checkout(repo.source, repo.cache)
     assert repo.all_up_to_date() == (expected_message is None)
-    log_message = normalize_message(caplog.text.strip(), git_dir=local_git_repo)
+    log_message = normalize_message(caplog.text, git_dir=local_git_repo)
     if expected_message is None:
         assert log_message == ""
     else:

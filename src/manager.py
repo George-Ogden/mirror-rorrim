@@ -1,7 +1,6 @@
 import abc
 from collections.abc import Callable
 from dataclasses import dataclass
-import functools
 import os
 
 from .constants import MIRROR_FILE, MIRROR_LOCK
@@ -29,9 +28,15 @@ class MirrorManager(abc.ABC):
                 os.remove(self.target / MIRROR_LOCK)
             raise e
 
-    @functools.cached_property
-    def lock(self) -> FileSystemLock:
+    @property
+    @abc.abstractmethod
+    def lock(self) -> FileSystemLock: ...
+
+    def _new_lock(self) -> FileSystemLock:
         return FileSystemLock.create(self.lock_file)
+
+    def _existing_lock(self) -> FileSystemLock:
+        return FileSystemLock.edit(self.lock_file)
 
     @property
     def lock_file(self) -> AbsFile:

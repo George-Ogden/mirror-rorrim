@@ -210,20 +210,22 @@ def none_up_to_date_test_case() -> Mirror:
     [
         (
             all_up_to_date_test_case,
-            snapshot("Checking out all repos ... Checking out all repos [done] All up to date!"),
+            snapshot(
+                "Checking out all repos ...    Checking out all repos [done]    All up to date!"
+            ),
             0,
         ),
         (
             partially_up_to_date_test_case,
             snapshot(
-                "Checking out all repos ... Checking out all repos [done] 'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2. 'file2' has commit Commit 1, but 'GIT_DIR' has commit Commit 2. 'file5' has not been mirrored from 'GIT_DIR'."
+                "Checking out all repos ...    Checking out all repos [done]    'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file2' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file5' has not been mirrored from 'GIT_DIR'."
             ),
             1,
         ),
         (
             none_up_to_date_test_case,
             snapshot(
-                "Checking out all repos ... Checking out all repos [done] 'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2. 'file3' has not been mirrored from 'GIT_DIR'. 'file4' has commit Commit 1, but 'GIT_DIR' has commit Commit 2. 'file5' has not been mirrored from 'GIT_DIR'."
+                "Checking out all repos ...    Checking out all repos [done]    'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file3' has not been mirrored from 'GIT_DIR'.    'file4' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file5' has not been mirrored from 'GIT_DIR'."
             ),
             1,
         ),

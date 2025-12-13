@@ -1,31 +1,40 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 import functools
 import os
 from pathlib import Path
 import sys
 import traceback
+from typing import TYPE_CHECKING
 
 import click
 from git import InvalidGitRepositoryError
 from loguru import logger
 
+from .checker import MirrorChecker
 from .constants import MIRROR_FILE
 from .githelper import GitHelper
 from .installer import InstallSource, MirrorInstaller
 from .logger import setup_logger
 from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
 
+if TYPE_CHECKING:
+    from sys import _ExitCode
 
-def check_for_errors[**P](fn: Callable[P, None]) -> Callable[P, None]:
+
+def check_for_errors[**P](fn: Callable[P, _ExitCode]) -> Callable[P, None]:
     @functools.wraps(fn)
     def main(*args: P.args, **kwargs: P.kwargs) -> None:
         try:
-            fn(*args, **kwargs)
+            exitcode = fn(*args, **kwargs)
         except BaseException as e:
             logger.debug(f"Threw {type(e)}!")
             logger.trace(traceback.format_exc())
             logger.error(f"{type(e).__name__}: {e}")
             sys.exit(1)
+        if exitcode is not None:
+            sys.exit(exitcode)
 
     return main
 
@@ -95,3 +104,17 @@ def install(config_file: str, config_repo: str | None) -> None:
         source = (source_remote, source_path)
     installer = MirrorInstaller(target=GitDir.cwd(), source=source)
     installer.install()
+
+
+@main.command()
+@check_for_errors
+def check() -> _ExitCode:
+    """Check whether files from Mirror|rorriM are up to date with their remotes.
+
+    \b
+    Examples:
+    # Check current directory.
+    python main.py check
+    """
+    checker = MirrorChecker(target=GitDir.cwd())
+    return checker.check()

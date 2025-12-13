@@ -59,11 +59,11 @@ def test_installer_source_repo(
         pytest.param("repo_with_multiple_configs", (None, "config.yaml"), marks=[pytest.mark.slow]),
         (
             "remote_only",
-            ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
+            ("https://github.com/George-Ogden/mirror-rorrim-test-data", "config-only.yaml"),
         ),
         (
             "remote_config_overwrite",
-            ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
+            ("https://github.com/George-Ogden/mirror-rorrim-test-data", "config-only.yaml"),
         ),
         ("same_directory", None),
     ],

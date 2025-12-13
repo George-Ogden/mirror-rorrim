@@ -8,6 +8,7 @@ from .config import MirrorConfig
 from .config_parser import Parser
 from .constants import MIRROR_FILE
 from .file import MirrorFile, VersionedMirrorFile
+from .lock import FileSystemLock
 from .logger import describe
 from .manager import MirrorManager
 from .mirror import Mirror
@@ -31,6 +32,10 @@ class MirrorInstaller(MirrorManager):
     @functools.cached_property
     def mirror(self) -> Mirror:
         return Mirror.from_config(self.load_config(), state=None)
+
+    @functools.cached_property
+    def lock(self) -> FileSystemLock:
+        return self._new_lock()
 
     def load_config(self) -> MirrorConfig:
         if self.source_repo is None:

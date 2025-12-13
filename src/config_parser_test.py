@@ -589,7 +589,7 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
         (
             "syntax_error.yaml",
             snapshot(
-                'while scanning a simple key in "TEST_DATA/syntax_error.yaml", line 4, column 1 could not find expected \':\' in "TEST_DATA/syntax_error.yaml", line 5, column 1'
+                'while scanning a simple key    in "TEST_DATA/syntax_error.yaml", line 4, column 1    could not find expected \':\'    in "TEST_DATA/syntax_error.yaml", line 5, column 1'
             ),
         ),
         (

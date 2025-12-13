@@ -118,15 +118,17 @@ def normalize_message(
     git_dir: Sequence[AbsDir] | AbsDir | None = None,
 ) -> str:
     error_msg = e if isinstance(e, str) else str(e.value)
+    error_msg = error_msg.strip()
     if test_data_path is not None:
         error_msg = error_msg.replace(os.fspath(test_data_path), "TEST_DATA")
     if git_dir is not None:
         git_dirs = [git_dir] if isinstance(git_dir, AbsDir) else git_dir
         for git_dir in git_dirs:
             error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
-            for commit in GitHelper.repo(git_dir).iter_commits():
-                error_msg = error_msg.replace(commit.hexsha, cast(str, commit.message))
-    return " ".join(line.strip() for line in error_msg.splitlines() if line.strip())
+            with contextlib.suppress(ValueError):
+                for commit in GitHelper.repo(git_dir).iter_commits():
+                    error_msg = error_msg.replace(commit.hexsha, cast(str, commit.message))
+    return (" " * 4).join(line.strip() for line in error_msg.splitlines() if line.strip())
 
 
 def setup_repo(git_dir: GitDir, data_path: AbsDir) -> None:
