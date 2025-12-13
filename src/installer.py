@@ -14,7 +14,7 @@ from .lock import FileSystemLock
 from .logger import describe
 from .mirror import Mirror
 from .repo import MirrorRepo
-from .state import MirrorState, ReadWriteableState
+from .state import MirrorState
 from .typed_path import AbsFile, GitDir, RelFile, Remote
 
 type InstallSource = AbsFile | RelFile | tuple[Remote, RelFile]
@@ -28,8 +28,8 @@ class Installer:
     def install(self) -> None:
         lock = self.lock()
         try:
-            state = self._install()
-            lock.unlock(state)
+            self._install()
+            lock.unlock(self.state)
             GitHelper.add(self.target, MIRROR_LOCK, MIRROR_FILE)
         except BaseException as e:
             os.remove(self.target / MIRROR_LOCK)
@@ -42,10 +42,9 @@ class Installer:
     def lock_file(self) -> AbsFile:
         return self.target / MIRROR_LOCK
 
-    def _install(self) -> ReadWriteableState:
+    def _install(self) -> None:
         self.checkout_all()
         self.update_all()
-        return self.state
 
     @describe("Syncing all repos", level="INFO")
     def checkout_all(self) -> None:
