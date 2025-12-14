@@ -87,6 +87,28 @@ class GitHelper:
         return git.safe_decode(cmd.proc.stdout.read())
 
     @classmethod
+    def file_diff(cls, local: GitDir, commit: Commit, file: RelFile) -> str:
+        cmd: AutoInterrupt = cls.run_command(
+            local,
+            "diff",
+            "--full-index",
+            str(commit),
+            "--",
+            os.fspath(file),
+            as_process=True,
+        )
+        assert cmd.proc is not None
+        assert cmd.proc.stdout is not None
+        _ret_code = cmd.proc.wait()
+        return git.safe_decode(cmd.proc.stdout.read())
+
+    @classmethod
+    def file_blob(cls, local: GitDir, commit: Commit, file: RelFile) -> bytes:
+        # gitpython-developers/GitPython#2094
+        blob = cls.tree(local, commit) / os.fspath(file)
+        return blob.data_stream.read()
+
+    @classmethod
     def add(cls, local: GitDir, *files: RelFile) -> None:
         # repo.index.add is not syncing
         cls.run_command(local, "add", *(os.fspath(file) for file in files))

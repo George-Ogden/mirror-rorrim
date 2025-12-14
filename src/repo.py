@@ -98,7 +98,7 @@ class MirrorRepo:
 
     def diffs(self) -> Iterable[Diff]:
         for file in self.files:
-            yield Diff.new_file(self.cache, file.file)
+            yield Diff.empty(self.cache, file.file)
 
     def update(self, target: GitDir) -> None:
         for diff in self.diffs():
