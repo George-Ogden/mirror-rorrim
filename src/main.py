@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import sys
 import traceback
-from typing import TYPE_CHECKING
 
 import click
 from git import InvalidGitRepositoryError
@@ -18,12 +17,10 @@ from .githelper import GitHelper
 from .installer import InstallSource, MirrorInstaller
 from .logger import setup_logger
 from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
-
-if TYPE_CHECKING:
-    from sys import _ExitCode
+from .types import ExitCode
 
 
-def check_for_errors[**P](fn: Callable[P, _ExitCode]) -> Callable[P, None]:
+def check_for_errors[**P](fn: Callable[P, ExitCode | None]) -> Callable[P, None]:
     @functools.wraps(fn)
     def main(*args: P.args, **kwargs: P.kwargs) -> None:
         try:
@@ -108,7 +105,7 @@ def install(config_file: str, config_repo: str | None) -> None:
 
 @main.command()
 @check_for_errors
-def check() -> _ExitCode:
+def check() -> ExitCode:
     """Check whether files from Mirror|rorriM are up to date with their remotes.
 
     \b

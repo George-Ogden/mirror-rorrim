@@ -23,7 +23,8 @@ from .test_utils import (
     quick_mirror_repo,
     quick_mirror_repo_state,
 )
-from .typed_path import AbsDir, Commit, GitDir, RelDir, RelFile, Remote
+from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
+from .types import Commit
 
 
 @pytest.fixture

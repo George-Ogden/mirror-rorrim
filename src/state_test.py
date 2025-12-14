@@ -5,7 +5,8 @@ from yaml import Node, YAMLError
 
 from .state import AutoState, MirrorRepoState, MirrorState
 from .test_utils import quick_mirror_repo_state, quick_mirror_state
-from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
+from .typed_path import AbsDir, RelDir, RelFile, Remote
+from .types import Commit
 
 
 @pytest.fixture

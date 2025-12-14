@@ -11,7 +11,8 @@ from .file import VersionedMirrorFile
 from .githelper import GitHelper
 from .logger import describe
 from .state import MirrorRepoState
-from .typed_path import Commit, GitDir, RelDir, RelFile, Remote
+from .typed_path import GitDir, RelDir, RelFile, Remote
+from .types import Commit
 
 
 @dataclass

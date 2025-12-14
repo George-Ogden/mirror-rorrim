@@ -9,7 +9,8 @@ from typing import ClassVar, Self
 
 from .constants import MIRROR_NAME
 from .state import ReadableState, WriteableState
-from .typed_path import AbsFile, PyFile
+from .typed_path import AbsFile
+from .types import PyFile
 
 
 @dataclass(frozen=True)

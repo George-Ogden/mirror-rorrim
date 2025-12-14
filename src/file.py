@@ -6,7 +6,8 @@ from git import Blob, Submodule, Tree
 
 from .config import MirrorFileConfig
 from .githelper import GitHelper
-from .typed_path import Commit, GitDir, RelFile
+from .typed_path import GitDir, RelFile
+from .types import Commit
 
 
 @dataclass(frozen=True, kw_only=True)

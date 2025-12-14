@@ -13,6 +13,7 @@ from .mirror import Mirror
 from .state import MirrorState
 from .test_utils import add_commit, normalize_message, quick_mirror, quick_mirror_repo
 from .typed_path import AbsDir, RelDir, RelFile
+from .types import ExitCode
 
 
 @pytest.fixture
@@ -234,7 +235,7 @@ def none_up_to_date_test_case() -> Mirror:
 def test_mirror_check(
     setup: Callable[[], Mirror],
     expected_message: str,
-    expected_exitcode: int,
+    expected_exitcode: ExitCode,
     caplog: LogCaptureFixture,
     log_cleanly: None,
 ) -> None:

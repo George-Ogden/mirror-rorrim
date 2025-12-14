@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import functools
-from typing import TYPE_CHECKING
 
 from yaml import YAMLError
 
@@ -13,17 +12,15 @@ from .lock import FileSystemLock
 from .manager import MirrorManager
 from .mirror import Mirror
 from .state import MirrorState
-
-if TYPE_CHECKING:
-    from sys import _ExitCode
+from .types import ExitCode
 
 
 @dataclass(frozen=True)
 class MirrorChecker(MirrorManager):
-    def check(self) -> _ExitCode:
+    def check(self) -> ExitCode:
         return self._run(self._check, keep_lock_on_failure=True)
 
-    def _check(self) -> _ExitCode:
+    def _check(self) -> ExitCode:
         return self.mirror.check()
 
     @functools.cached_property

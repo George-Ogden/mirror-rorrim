@@ -14,7 +14,8 @@ import yaml
 from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 from yaml.constructor import ConstructorError
 
-from .typed_path import Commit, RelFile, Remote
+from .typed_path import RelFile, Remote
+from .types import Commit
 from .utils import all_unique
 
 if TYPE_CHECKING:

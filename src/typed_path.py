@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 import functools
 import hashlib
-import io
 import os.path
 from pathlib import Path
 import re
@@ -147,14 +146,3 @@ class Remote:
         return hashlib.blake2b(
             bytes(self.canonical, encoding="utf-8", errors="ignore"), usedforsecurity=False
         ).hexdigest()
-
-
-@dataclass(frozen=True, slots=True)
-class Commit:
-    sha: str
-
-    def __str__(self) -> str:
-        return self.sha
-
-
-type PyFile = io.TextIOWrapper

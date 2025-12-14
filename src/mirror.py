@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 from loguru import logger
 
@@ -12,9 +12,7 @@ from .logger import describe
 from .repo import MirrorRepo
 from .state import MirrorState
 from .typed_path import GitDir
-
-if TYPE_CHECKING:
-    from sys import _ExitCode
+from .types import ExitCode
 
 
 @dataclass(frozen=True)
@@ -34,7 +32,7 @@ class Mirror:
     def __iter__(self) -> Iterator[MirrorRepo]:
         return iter(self.repos)
 
-    def check(self) -> _ExitCode:
+    def check(self) -> ExitCode:
         self.checkout_all()
         up_to_date = self.all_up_to_date()
         if up_to_date:

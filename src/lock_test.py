@@ -12,7 +12,8 @@ import pytest
 
 from .constants import MIRROR_LOCK, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemLock, FileSystemSemaphore
-from .typed_path import AbsDir, AbsFile, PyFile, RelDir, RelFile
+from .typed_path import AbsDir, AbsFile, RelDir, RelFile
+from .types import PyFile
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite

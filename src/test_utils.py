@@ -14,7 +14,8 @@ from .githelper import GitHelper
 from .mirror import Mirror
 from .repo import MirrorRepo
 from .state import MirrorRepoState, MirrorState
-from .typed_path import AbsDir, Commit, GitDir, RelDir, RelFile, Remote
+from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
+from .types import Commit
 
 
 def quick_mirror_file(source: str | RelFile, target: RelFile | str | None = None) -> MirrorFile:

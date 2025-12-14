@@ -14,7 +14,8 @@ from loguru import logger
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
 from .logger import describe
-from .typed_path import AbsDir, Commit, GitDir, RelFile, Remote
+from .typed_path import AbsDir, GitDir, RelFile, Remote
+from .types import Commit
 
 
 class GitHelper:
