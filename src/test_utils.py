@@ -85,11 +85,12 @@ def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None)
     repo = git.Repo.init(os.fspath(path))
     path = GitDir(path)
 
-    for file in glob(str(path.path / "*")):
-        if os.path.isfile(file):
-            os.remove(file)
-        else:
-            shutil.rmtree(file)
+    if files is not None:
+        for file in glob(str(path.path / "*")):
+            if os.path.isfile(file):
+                os.remove(file)
+            else:
+                shutil.rmtree(file)
 
     if isinstance(files, AbsDir):
         shutil.copytree(files, path, dirs_exist_ok=True)

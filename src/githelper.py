@@ -1,7 +1,7 @@
 import functools
 import os
 import shutil
-from subprocess import PIPE
+from subprocess import PIPE, Popen
 import traceback
 from typing import Any
 
@@ -28,6 +28,15 @@ class GitHelper:
     @classmethod
     def run_command(cls, local: GitDir, command: str, *args: Any, **kwargs: Any) -> Any:
         return getattr(cls.repo(local).git, command)(*args, **kwargs)
+
+    @classmethod
+    def _trace_process(cls, process: Popen) -> None:
+        assert process.stdout is not None
+        assert process.stderr is not None
+        logger.trace(f"Running: {process.args!r}")
+        logger.trace(f"stdout:\n{git.safe_decode(process.stdout.read())}")
+        logger.trace(f"stderr:\n{git.safe_decode(process.stderr.read())}")
+        logger.trace(f"returncode = {process.returncode}")
 
     @classmethod
     @functools.cache
@@ -84,7 +93,9 @@ class GitHelper:
         assert cmd.proc is not None
         assert cmd.proc.stdout is not None
         _ret_code = cmd.proc.wait()
-        return git.safe_decode(cmd.proc.stdout.read())
+        patch = git.safe_decode(cmd.proc.stdout.read())
+        cls._trace_process(cmd.proc)
+        return patch
 
     @classmethod
     def file_diff(cls, local: GitDir, commit: Commit, file: RelFile) -> str:
@@ -100,7 +111,9 @@ class GitHelper:
         assert cmd.proc is not None
         assert cmd.proc.stdout is not None
         _ret_code = cmd.proc.wait()
-        return git.safe_decode(cmd.proc.stdout.read())
+        patch = git.safe_decode(cmd.proc.stdout.read())
+        cls._trace_process(cmd.proc)
+        return patch
 
     @classmethod
     def file_blob(cls, local: GitDir, commit: Commit, file: RelFile) -> bytes:
@@ -123,6 +136,20 @@ class GitHelper:
         cmd.proc.stdin.write(patch.encode("utf-8"))
         cmd.proc.stdin.close()
         _ret_code = cmd.proc.wait()
+        cls._trace_process(cmd.proc)
+
+    @classmethod
+    def hash_object(cls, local: GitDir, blob: bytes) -> None:
+        cmd: AutoInterrupt = cls.run_command(
+            local, "hash-object", "--stdin", "-w", istream=PIPE, as_process=True
+        )
+        assert cmd.proc is not None
+        assert cmd.proc.stdin is not None
+        assert cmd.proc.stdout is not None
+        cmd.proc.stdin.write(blob)
+        cmd.proc.stdin.close()
+        _ret_code = cmd.proc.wait()
+        cls._trace_process(cmd.proc)
 
     @classmethod
     def commit(cls, local: GitDir) -> str:

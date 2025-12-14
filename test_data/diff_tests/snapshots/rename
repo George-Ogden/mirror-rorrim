@@ -7,3 +7,13 @@
   
   '''
 # ---
+# name: test_diff_apply_versioned_file[file4]
+  '''
+  <<<<<<< ours
+  =======
+  starts with a single line
+  then another line is added
+  >>>>>>> theirs
+  
+  '''
+# ---

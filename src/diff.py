@@ -89,8 +89,19 @@ class Diff:
         return f"--- {os.devnull}\n"
 
     def apply(self, local: GitDir) -> None:
+        self._add_file(local)
+        self._hash_blob(local)
+        self._apply_patch(local)
+
+    def _add_file(self, local: GitDir) -> None:
         with contextlib.suppress(git.GitCommandError):
             GitHelper.add(local, self.file.target)
+
+    def _hash_blob(self, local: GitDir) -> None:
+        if self.blob is not None:
+            GitHelper.hash_object(local, self.blob)
+
+    def _apply_patch(self, local: GitDir) -> None:
         with describe(f"Applying patch from {self.file.source} to {self.file.target}"):
             logger.trace(f"patch = {self.patch}")
             GitHelper.apply_patch(local, self.patch)
