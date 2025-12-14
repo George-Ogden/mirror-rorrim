@@ -32,7 +32,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
             "behind",
             1,
             snapshot(
-                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 84b08564197d9a076d4c66ff58a613dd4940cdd7, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 780ac9c32a9ac788c8f8a0d4b57ab779d00599d4."
+                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 84b08564197d9a076d4c66ff58a613dd4940cdd7, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376b8eac3488bb73ae2e9169de3c6bcb983d."
             ),
             marks=[pytest.mark.slow],
         ),
@@ -61,7 +61,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
             "invalid_commit",
             1,
             snapshot(
-                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 0000000000000000000000000000000000000000, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 780ac9c32a9ac788c8f8a0d4b57ab779d00599d4."
+                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 0000000000000000000000000000000000000000, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376b8eac3488bb73ae2e9169de3c6bcb983d."
             ),
         ),
         (
