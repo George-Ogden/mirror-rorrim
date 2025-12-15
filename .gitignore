@@ -1,7 +1,11 @@
-### Python ###
 # Specific Files
 tmp.py
+notes.txt
+TODO
+*.pseudo
+*.patch
 
+### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
