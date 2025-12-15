@@ -45,8 +45,9 @@ repos:
         exclude: test_data/.*/snapshots/
       - id: todo-check
         exclude: (?x)(
+          /snapshots/|
           .pre-commit-config.yaml|
-          /snapshots/
+          .gitignore
           )
       - id: mypy
         args: [-r, requirements-dev.txt, --show-traceback]
