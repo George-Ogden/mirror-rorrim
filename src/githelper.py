@@ -1,14 +1,16 @@
+from collections.abc import Sequence
+from dataclasses import dataclass
 import functools
 import os
 import shutil
 from subprocess import PIPE, Popen
 import traceback
-from typing import Any
+from typing import Any, cast
 
 import git
 from git import GitCommandError, GitError, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
-from git.cmd import _AutoInterrupt as AutoInterrupt
+from git.cmd import _AutoInterrupt as GitCmd
 from loguru import logger
 
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
@@ -16,6 +18,21 @@ from .lock import FileSystemSemaphore
 from .logger import describe
 from .typed_path import AbsDir, GitDir, RelFile, Remote
 from .types import Commit
+from .utils import strict_not_none
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProcessResult:
+    stdout: str
+    stderr: str
+    returncode: int
+    args: Sequence[str]
+
+    def log(self, level: str) -> None:
+        logger.log(level, f"Running: {self.args}")
+        logger.log(level, f"stdout:\n{self.stdout}")
+        logger.log(level, f"stderr:\n{self.stderr}")
+        logger.log(level, f"returncode = {self.returncode}")
 
 
 class GitHelper:
@@ -30,13 +47,27 @@ class GitHelper:
         return getattr(cls.repo(local).git, command)(*args, **kwargs)
 
     @classmethod
-    def _trace_process(cls, process: Popen) -> None:
-        assert process.stdout is not None
-        assert process.stderr is not None
-        logger.trace(f"Running: {process.args!r}")
-        logger.trace(f"stdout:\n{git.safe_decode(process.stdout.read())}")
-        logger.trace(f"stderr:\n{git.safe_decode(process.stderr.read())}")
-        logger.trace(f"returncode = {process.returncode}")
+    def wait(cls, process: Popen | GitCmd) -> ProcessResult:
+        if isinstance(process, GitCmd):
+            process = strict_not_none(process.proc)
+        process.wait()
+        result = ProcessResult(
+            stdout=strict_not_none(git.safe_decode(strict_not_none(process.stdout).read())),
+            stderr=strict_not_none(git.safe_decode(strict_not_none(process.stderr).read())),
+            returncode=process.returncode,
+            args=tuple(cast(Sequence[str], process.args)),
+        )
+        if result.returncode in (0, 1):
+            result.log(level="TRACE")
+        else:
+            result.log(level="DEBUG")
+            raise GitCommandError(
+                tuple(result.args),
+                status=result.returncode,
+                stdout=result.stdout,
+                stderr=result.stderr,
+            )
+        return result
 
     @classmethod
     @functools.cache
@@ -80,7 +111,7 @@ class GitHelper:
 
     @classmethod
     def fresh_diff(cls, local: GitDir, file: RelFile) -> str:
-        cmd: AutoInterrupt = cls.run_command(
+        cmd: GitCmd = cls.run_command(
             local,
             "diff",
             "--no-index",
@@ -90,16 +121,11 @@ class GitHelper:
             os.fspath(file),
             as_process=True,
         )
-        assert cmd.proc is not None
-        assert cmd.proc.stdout is not None
-        _ret_code = cmd.proc.wait()
-        patch = git.safe_decode(cmd.proc.stdout.read())
-        cls._trace_process(cmd.proc)
-        return patch
+        return cls.wait(cmd).stdout
 
     @classmethod
     def file_diff(cls, local: GitDir, commit: Commit, file: RelFile) -> str:
-        cmd: AutoInterrupt = cls.run_command(
+        cmd: GitCmd = cls.run_command(
             local,
             "diff",
             "--full-index",
@@ -108,12 +134,7 @@ class GitHelper:
             os.fspath(file),
             as_process=True,
         )
-        assert cmd.proc is not None
-        assert cmd.proc.stdout is not None
-        _ret_code = cmd.proc.wait()
-        patch = git.safe_decode(cmd.proc.stdout.read())
-        cls._trace_process(cmd.proc)
-        return patch
+        return cls.wait(cmd).stdout
 
     @classmethod
     def file_blob(cls, local: GitDir, commit: Commit, file: RelFile) -> bytes:
@@ -128,28 +149,25 @@ class GitHelper:
 
     @classmethod
     def apply_patch(cls, local: GitDir, patch: str) -> None:
-        cmd: AutoInterrupt = cls.run_command(
+        cmd: GitCmd = cls.run_command(
             local, "apply", "--allow-empty", "-3", "-", istream=PIPE, as_process=True
         )
         assert cmd.proc is not None
         assert cmd.proc.stdin is not None
         cmd.proc.stdin.write(patch.encode("utf-8"))
         cmd.proc.stdin.close()
-        _ret_code = cmd.proc.wait()
-        cls._trace_process(cmd.proc)
+        cls.wait(cmd)
 
     @classmethod
     def hash_object(cls, local: GitDir, blob: bytes) -> None:
-        cmd: AutoInterrupt = cls.run_command(
+        cmd: GitCmd = cls.run_command(
             local, "hash-object", "--stdin", "-w", istream=PIPE, as_process=True
         )
         assert cmd.proc is not None
         assert cmd.proc.stdin is not None
-        assert cmd.proc.stdout is not None
         cmd.proc.stdin.write(blob)
         cmd.proc.stdin.close()
-        _ret_code = cmd.proc.wait()
-        cls._trace_process(cmd.proc)
+        cls.wait(cmd)
 
     @classmethod
     def commit(cls, local: GitDir) -> str:

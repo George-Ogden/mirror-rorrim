@@ -9,21 +9,16 @@ from pytest import CaptureFixture
 from .constants import MIRROR_LOCK, MIRROR_NAME
 from .main import main
 from .test_utils import add_commit, normalize_message
-from .typed_path import AbsDir, GitDir, RelDir, RelFile
+from .typed_path import AbsDir, GitDir, RelDir
 
-CWD = AbsDir.cwd()
+
+@pytest.fixture
+def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
+    return global_test_data_path
 
 
 def remove_git_data(local: GitDir) -> None:
     shutil.rmtree(local / RelDir(".git"))
-
-
-def add_existing_lock_test_case(local: AbsDir) -> None:
-    (local / MIRROR_LOCK).path.touch()
-
-
-def all_up_to_date_test_case(local: GitDir) -> None:
-    add_commit(local, CWD / RelDir("test_data/checker_tests/up_to_date"))
 
 
 @pytest.mark.parametrize(
@@ -32,9 +27,9 @@ def all_up_to_date_test_case(local: GitDir) -> None:
         # install tests
         (
             # abs path to config
-            f"install --config {CWD / RelFile('test_data/installer_tests/empty_repo_with_config/.mirror.yaml')}",
+            "install --config .mirror.yaml",
             None,
-            None,
+            "installer_tests/empty_repo_with_config",
         ),
         (
             # config is missing
@@ -88,14 +83,14 @@ def all_up_to_date_test_case(local: GitDir) -> None:
             snapshot(
                 "FileExistsError: GIT_DIR/.mirror.lock - have you already installed Mirror|rorriM? If not, delete this file and try again."
             ),
-            add_existing_lock_test_case,
+            "installer_tests/existing_lock",
         ),
         # check tests
         (
             # works fine
             "check",
             None,
-            all_up_to_date_test_case,
+            "checker_tests/up_to_date",
         ),
         (
             # not a git repo
@@ -105,17 +100,51 @@ def all_up_to_date_test_case(local: GitDir) -> None:
             ),
             remove_git_data,
         ),
+        # sync tests
+        (
+            # works fine
+            "sync",
+            None,
+            "syncer_tests/behind",
+        ),
+        (
+            # not a git repo
+            "sync",
+            snapshot(
+                "InvalidGitRepositoryError: 'GIT_DIR' is not a git repository, please run `git init` before installing."
+            ),
+            remove_git_data,
+        ),
+        (
+            # commit does not exist
+            "sync",
+            snapshot(
+                "Updating all files [failed]    RuntimeError: Unable to calculate diff from 0000000000000000000000000000000000000000 for '.pre-commit-config.yaml' (from 'https://github.com/George-Ogden/remote-installer-test-data')."
+            ),
+            "syncer_tests/invalid_commit",
+        ),
+        (
+            # file does not exist
+            "sync",
+            snapshot(
+                "Checking out all repos [failed]    Syncing all repos [failed]    MissingFileError: 'filedoesnotexist' could not be found from 'https://github.com/George-Ogden/remote-installer-test-data'."
+            ),
+            "syncer_tests/untracked_file",
+        ),
     ],
 )
 def test_main(
     args: str,
     expected: str | None,
-    setup_repo: Callable[[GitDir], None] | None,
+    setup_repo: Callable[[GitDir], None] | str | RelDir | None,
     local_git_repo: GitDir,
+    test_data_path: AbsDir,
     capsys: CaptureFixture,
 ) -> None:
-    if setup_repo is not None:
+    if callable(setup_repo):
         setup_repo(local_git_repo)
+    elif setup_repo:
+        add_commit(local_git_repo, test_data_path / RelDir(setup_repo))
     argv = ["-q", *shlex.split(args)]
     mirror_existed_before = (local_git_repo / MIRROR_LOCK).exists()
     with pytest.raises(SystemExit) as e:

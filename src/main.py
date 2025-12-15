@@ -16,6 +16,7 @@ from .constants import MIRROR_FILE
 from .githelper import GitHelper
 from .installer import InstallSource, MirrorInstaller
 from .logger import setup_logger
+from .syncer import MirrorSyncer
 from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
 from .types import ExitCode
 
@@ -109,9 +110,23 @@ def check() -> ExitCode:
     """Check whether files from Mirror|rorriM are up to date with their remotes.
 
     \b
-    Examples:
-    # Check current directory.
+    Example:
+    # Check the current directory.
     python main.py check
     """
     checker = MirrorChecker(target=GitDir.cwd())
     return checker.check()
+
+
+@main.command()
+@check_for_errors
+def sync() -> None:
+    """Sync files from Mirror|rorriM with their remotes.
+
+    \b
+    Example:
+    # Sync the current directory.
+    python main.py sync
+    """
+    syncer = MirrorSyncer(target=GitDir.cwd())
+    syncer.sync()

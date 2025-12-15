@@ -2,6 +2,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Self, cast
 
+from git import GitCommandError
 from loguru import logger
 
 from .config import MirrorRepoConfig
@@ -98,11 +99,22 @@ class MirrorRepo:
 
     def diffs(self) -> Iterable[Diff]:
         for file in self.files:
-            yield Diff.from_file(self.cache, file)
+            try:
+                yield Diff.from_file(self.cache, file)
+            except GitCommandError as e:
+                version_info = "" if file.commit is None else f"from {file.commit} "
+                raise RuntimeError(
+                    f"Unable to calculate diff {version_info}for {file.source} (from {self.source})."
+                ) from e
 
     def update(self, target: GitDir) -> None:
         for diff in self.diffs():
-            diff.apply(target)
+            try:
+                diff.apply(target)
+            except GitCommandError as e:
+                raise RuntimeError(
+                    f"Unable to apply diff from {diff.file.source} (from {self.source}) to {diff.file.target}."
+                ) from e
 
     @property
     def state(self) -> MirrorRepoState:
