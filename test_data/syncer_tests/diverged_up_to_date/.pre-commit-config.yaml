@@ -1,0 +1,17 @@
+default_stages: ["pre-commit"]
+default_install_hook_types: ["pre-commit", "commit-msg"]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v7.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: https://github.com/George-Ogden/pre-commit-hooks
+    rev: v2.0.3
+    hooks:
+      - id: check-merge-conflict
+      - id: todo-check
+      - id: spell-check-commit-msgs

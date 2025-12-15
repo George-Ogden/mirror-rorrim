@@ -1,0 +1,60 @@
+# serializer version: 1
+# name: test_installer_install[multiple_remotes]
+  dict({
+    '.mirror.lock': '''
+      # DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.
+      - commit: 446d376b8eac3488bb73ae2e9169de3c6bcb983d
+        files:
+        - .pre-commit-config.yaml
+        source: https://github.com/George-Ogden/remote-installer-test-data
+      - commit: 446d376b8eac3488bb73ae2e9169de3c6bcb983d
+        files:
+        - LICENSE
+        source: git@github.com:George-Ogden/mirror-rorrim-test-data.git
+  
+    ''',
+    '.mirror.yaml': '''
+      repos:
+        - source: https://github.com/George-Ogden/remote-installer-test-data
+          files:
+            - .pre-commit-config.yaml
+        - source: git@github.com:George-Ogden/mirror-rorrim-test-data.git
+          files:
+            - LICENSE
+  
+    ''',
+    '.pre-commit-config.yaml': '''
+      default_stages: ["pre-commit"]
+      default_install_hook_types: ["pre-commit", "commit-msg"]
+      
+      repos:
+        - repo: https://github.com/pre-commit/pre-commit-hooks
+          rev: v7.0.0
+          hooks:
+            - id: end-of-file-fixer
+            - id: mixed-line-ending
+            - id: trailing-whitespace
+      <<<<<<< ours
+      =======
+      
+        - repo: https://github.com/pre-commit/mirrors-prettier
+          rev: v3.1.0
+          hooks:
+            - id: prettier
+      
+        - repo: https://github.com/George-Ogden/pre-commit-hooks
+          rev: v2.0.3
+          hooks:
+            - id: check-merge-conflict
+            - id: todo-check
+            - id: spell-check-commit-msgs
+      >>>>>>> theirs
+  
+    ''',
+    'LICENSE': '''
+      This is not a real license.
+      It is used for testing purposes.
+  
+    ''',
+  })
+# ---

@@ -1,0 +1,7 @@
+# DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.
+- commit: 16b7a530bdb27f05844f6874778605e2d1706273
+  files:
+  - .pre-commit-config.yaml
+  - config-only.yaml
+  - LICENSE
+  source: https://github.com/George-Ogden/remote-installer-test-data

@@ -1,0 +1,7 @@
+repos:
+  - source: https://github.com/George-Ogden/remote-installer-test-data
+    files:
+      - .pre-commit-config.yaml
+  - source: git@github.com:George-Ogden/mirror-rorrim-test-data.git
+    files:
+      - LICENSE
