@@ -1,0 +1,20 @@
+# serializer version: 1
+# name: test_checker_check[invalid_commit-1-expected_log5-INFO]
+  dict({
+    '.mirror.lock': '''
+      # DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.
+      - commit: 0000000000000000000000000000000000000000
+        files:
+        - config-only.yaml
+        source: https://github.com/George-Ogden/remote-installer-test-data
+  
+    ''',
+    '.mirror.yaml': '''
+      repos:
+        - source: https://github.com/George-Ogden/remote-installer-test-data
+          files:
+            - .mirror.yaml: config-only.yaml
+  
+    ''',
+  })
+# ---

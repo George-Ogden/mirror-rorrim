@@ -1,4 +1,10 @@
 # serializer version: 1
-# name: test_diff_apply[file0]
+# name: test_diff_apply_new_file[file0]
+  ''
+# ---
+# name: test_diff_apply_versioned_file[file0]
+  ''
+# ---
+# name: test_diff_apply_versioned_file[file5]
   ''
 # ---

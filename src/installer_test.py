@@ -1,22 +1,32 @@
-import contextlib
 import os
-import shutil
 from unittest import mock
 
-import git
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from .constants import MIRROR_FILE, MIRROR_LOCK
-from .githelper import GitHelper
+from .constants import MIRROR_FILE
+from .installer import MirrorInstaller
 from .repo import MirrorRepo
-from .test_utils import quick_installer, quick_mirror_repo
-from .typed_path import AbsDir, RelDir, RelFile
+from .test_utils import quick_mirror_repo, setup_repo, snapshot_of_repo
+from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
 
 
 @pytest.fixture
 def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("installer_tests")
+
+
+def quick_installer(
+    target: None | str | AbsDir, remote: tuple[str | None | Remote, str | RelFile | None] | None
+) -> MirrorInstaller:
+    source_remote, source_path = remote or (None, None)
+    source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
+    source_path = RelFile(source_path or MIRROR_FILE)
+    source = source_path if source_remote is None else (source_remote, source_path)
+    return MirrorInstaller(
+        source=source,
+        target=GitDir(target or AbsDir.cwd()),
+    )
 
 
 @pytest.mark.parametrize(
@@ -49,11 +59,11 @@ def test_installer_source_repo(
         pytest.param("repo_with_multiple_configs", (None, "config.yaml"), marks=[pytest.mark.slow]),
         (
             "remote_only",
-            ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
+            ("https://github.com/George-Ogden/mirror-rorrim-test-data", "config-only.yaml"),
         ),
         (
             "remote_config_overwrite",
-            ("https://github.com/George-Ogden/remote-installer-test-data", "config-only.yaml"),
+            ("https://github.com/George-Ogden/mirror-rorrim-test-data", "config-only.yaml"),
         ),
         ("same_directory", None),
     ],
@@ -61,30 +71,14 @@ def test_installer_source_repo(
 def test_installer_install(
     test_name: str,
     source: tuple[None | str, str] | None,
-    local_git_repo: AbsDir,
+    local_git_repo: GitDir,
     test_data_path: AbsDir,
     snapshot: SnapshotAssertion,
 ) -> None:
     installer = quick_installer(local_git_repo, source)
-    with contextlib.suppress(FileNotFoundError):
-        shutil.copytree(test_data_path / RelDir(test_name), local_git_repo, dirs_exist_ok=True)
-        # gitpython-developers/GitPython#2085
-        repo = git.Repo(os.fspath(local_git_repo))
-        GitHelper.add(AbsDir(local_git_repo), RelFile("."))
-        repo.index.commit("Make remote a Git repo")
+    setup_repo(local_git_repo, test_data_path / RelDir(test_name))
+
     if isinstance(installer.source, RelFile):
         object.__setattr__(installer, "source", local_git_repo / installer.source)
     installer.install()
-
-    repo_contents = {}
-    for folder, _, filenames in local_git_repo.path.walk():
-        if ".git" in os.fspath(folder):
-            continue
-        for filename in filenames:
-            filepath = RelDir(folder) / RelFile(filename)
-            if RelFile(filename) == MIRROR_LOCK:
-                assert os.path.getsize(filepath) > 0
-                continue
-            with open(filepath) as f:
-                repo_contents[os.fspath((folder / filename).relative_to(local_git_repo))] = f.read()
-    assert repo_contents == snapshot
+    assert snapshot_of_repo(local_git_repo, include_lockfile=False) == snapshot

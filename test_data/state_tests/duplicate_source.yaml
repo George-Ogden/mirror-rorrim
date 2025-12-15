@@ -1,0 +1,6 @@
+- source: https://github.com/George-Ogden/mirror-config
+  files: []
+  commit: fd0a098dfe0db14360741d3548db164c9b3d1004
+- source: https://github.com/George-Ogden/mirror-config/
+  files: []
+  commit: fd0a098dfe0db14360741d3548db164c9b3d1004

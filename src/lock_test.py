@@ -12,7 +12,8 @@ import pytest
 
 from .constants import MIRROR_LOCK, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemLock, FileSystemSemaphore
-from .typed_path import AbsDir, AbsFile, PyFile, RelDir, RelFile
+from .typed_path import AbsDir, AbsFile, RelDir, RelFile
+from .types import PyFile
 
 if TYPE_CHECKING:
     from _typeshed import SupportsWrite
@@ -127,8 +128,37 @@ def test_create_new_file_created_in_race(tmp_lock_path: AbsFile) -> None:
                 assert intercepted_lock
                 return super().acquire_non_blocking(file)
 
-    with pytest.raises(FileExistsError):
+    with pytest.raises(OSError):
         MockFileSystemLock.create(tmp_lock_path)
+
+
+@pytest.mark.typed
+def test_edit_file_does_not_exist(tmp_lock_path: AbsFile) -> None:
+    with pytest.raises(FileNotFoundError):
+        FileSystemLock.edit(tmp_lock_path)
+
+
+@pytest.mark.typed
+def test_edit_file(tmp_lock_path: AbsFile) -> None:
+    tmp_lock_path.path.touch()
+    lock = FileSystemLock.edit(tmp_lock_path)
+    lock.file.write("success")  # test is writeable
+    lock.file.read()  # test is readable
+
+
+@pytest.mark.typed
+def test_edit_file_in_race(tmp_lock_path: AbsFile) -> None:
+    class MockFileSystemLock(FileSystemLock):
+        @classmethod
+        def acquire_non_blocking(cls, file: PyFile) -> Self | None:
+            with open(tmp_lock_path, "w") as f:
+                intercepted_lock = super().acquire_non_blocking(f)
+                assert intercepted_lock
+                return super().acquire_non_blocking(file)
+
+    tmp_lock_path.path.touch()
+    with pytest.raises(OSError):
+        MockFileSystemLock.edit(tmp_lock_path)
 
 
 @pytest.mark.typed

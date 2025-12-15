@@ -9,13 +9,22 @@ import git
 from git import GitError
 from inline_snapshot import snapshot
 import pytest
+from pytest import LogCaptureFixture
 from syrupy.assertion import SnapshotAssertion
 
+from .config import MirrorRepoConfig
+from .config_parser_test import quick_mirror_repo_config
 from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
 from .state import MirrorRepoState
-from .test_utils import add_commit, quick_mirror_repo
-from .typed_path import AbsDir, Commit, RelDir, RelFile, Remote
+from .test_utils import (
+    add_commit,
+    normalize_message,
+    quick_mirror_repo,
+    quick_mirror_repo_state,
+)
+from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
+from .types import Commit
 
 
 @pytest.fixture
@@ -133,7 +142,7 @@ def repo_renaming_test_case() -> MirrorRepo:
     ],
 )
 def test_update_all(
-    repo: MirrorRepo, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: AbsDir
+    repo: MirrorRepo, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: GitDir
 ) -> None:
     for file in repo.files:
         existing_file = test_data_path / RelDir("local") / file.target
@@ -197,3 +206,99 @@ def repeated_file_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
 def test_repo_state(repo: MirrorRepo, expected_state: MirrorRepoState) -> None:
     repo.checkout()
     assert repo.state == expected_state
+
+
+def all_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
+    commit = add_commit(git_dir, dict(file1="file1", file2="file2", file3="file3"))
+    return quick_mirror_repo(git_dir, [("file1", commit), ("file2", "file3", commit)])
+
+
+def empty_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
+    add_commit(git_dir)
+    return quick_mirror_repo(git_dir, [])
+
+
+def none_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
+    commit = add_commit(git_dir, dict(file1="file1", file2="file2", file3="file3"))
+    add_commit(git_dir, dict(file2="file1", file3="file2", file4="file3"))
+    return quick_mirror_repo(
+        git_dir, [("file1", commit), ("file2", commit), ("file3", "file4", commit)]
+    )
+
+
+def all_but_missing_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
+    commit = add_commit(git_dir, dict(file1="file1", file2="file2", file3="file3"))
+    return quick_mirror_repo(git_dir, [("file1", commit), ("file2", "file3", commit), "file4"])
+
+
+@pytest.mark.parametrize("log_level", ["INFO"])
+@pytest.mark.parametrize(
+    "setup, expected_message",
+    [
+        (all_up_to_date_test_case, None),
+        (empty_up_to_date_test_case, None),
+        (
+            none_up_to_date_test_case,
+            snapshot(
+                "'file1' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file2' has commit Commit 1, but 'GIT_DIR' has commit Commit 2.    'file3' has commit Commit 1, but 'GIT_DIR' has commit Commit 2."
+            ),
+        ),
+        (
+            all_but_missing_up_to_date_test_case,
+            snapshot("'file4' has not been mirrored from 'GIT_DIR'."),
+        ),
+    ],
+)
+def test_all_up_to_date(
+    setup: Callable[[GitDir], MirrorRepo],
+    expected_message: None | str,
+    local_git_repo: GitDir,
+    caplog: LogCaptureFixture,
+    log_cleanly: None,
+) -> None:
+    repo = setup(local_git_repo)
+    GitHelper.checkout(repo.source, repo.cache)
+    assert repo.all_up_to_date() == (expected_message is None)
+    log_message = normalize_message(caplog.text, git_dir=local_git_repo)
+    if expected_message is None:
+        assert log_message == ""
+    else:
+        assert log_message == expected_message
+        assert log_message.endswith(".")
+
+
+@pytest.mark.parametrize(
+    "config, state, expected",
+    [
+        # no state
+        (
+            quick_mirror_repo_config("sauce", ["file1", ("file2", "file3")]),
+            None,
+            quick_mirror_repo("sauce", ["file1", ("file2", "file3")]),
+        ),
+        # fully covering state
+        (
+            quick_mirror_repo_config("sauce", ["file1", ("file2", "file3")]),
+            quick_mirror_repo_state("sauce", "commitabcdef", ["file1", "file2", "file3"]),
+            quick_mirror_repo(
+                "sauce", [("file1", Commit("commitabcdef")), ("file2", "file3", "commitabcdef")]
+            ),
+        ),
+        # partially covering state
+        (
+            quick_mirror_repo_config("sauce", ["file1", ("file2", "file3")]),
+            quick_mirror_repo_state("sauce", "commitabcdef", ["file1", "file3"]),
+            quick_mirror_repo("sauce", [("file1", Commit("commitabcdef")), ("file2", "file3")]),
+        ),
+        # different canonical paths
+        (
+            quick_mirror_repo_config("https://myrepo.com/", ["file1", "file2"]),
+            quick_mirror_repo_state("https://myrepo.com", "abc123", ["file1", "file3"]),
+            quick_mirror_repo("https://myrepo.com/", [("file1", Commit("abc123")), ("file2")]),
+        ),
+    ],
+)
+def test_repo_from_config(
+    config: MirrorRepoConfig, state: MirrorRepoState | None, expected: MirrorRepo
+) -> None:
+    assert MirrorRepo.from_config(config, state) == expected

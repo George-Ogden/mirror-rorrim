@@ -44,6 +44,10 @@ repos:
       - id: dbg-check
         exclude: test_data/.*/snapshots/
       - id: todo-check
+        exclude: (?x)(
+          .pre-commit-config.yaml|
+          /snapshots/
+          )
       - id: mypy
         args: [-r, requirements-dev.txt, --show-traceback]
       - id: spell-check-commit-msgs

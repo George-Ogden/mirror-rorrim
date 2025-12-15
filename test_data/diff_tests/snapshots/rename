@@ -1,9 +1,19 @@
 # serializer version: 1
-# name: test_diff_apply[file3]
+# name: test_diff_apply_new_file[file3]
   '''
   new content
   that spans
   over multiple lines
+  
+  '''
+# ---
+# name: test_diff_apply_versioned_file[file4]
+  '''
+  <<<<<<< ours
+  =======
+  starts with a single line
+  then another line is added
+  >>>>>>> theirs
   
   '''
 # ---

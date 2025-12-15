@@ -2,17 +2,20 @@ from collections.abc import Generator
 import os
 from pathlib import Path
 import sys
+import textwrap
 
 import git
 from loguru import logger
 import pytest
-from pytest import FixtureRequest
+from pytest import FixtureRequest, LogCaptureFixture
 from syrupy.assertion import SnapshotAssertion
 from syrupy.extensions.amber import AmberSnapshotExtension
 from syrupy.location import PyTestLocation
 from syrupy.types import SnapshotIndex
+import yaml
+from yaml import Node
 
-from .typed_path import AbsDir, AbsFile, RelDir, RelFile
+from .typed_path import AbsDir, AbsFile, GitDir, RelDir, RelFile
 
 
 @pytest.fixture
@@ -26,11 +29,11 @@ def typed_tmp_path(tmp_path: Path) -> AbsDir:
 
 
 @pytest.fixture
-def local_git_repo(typed_tmp_path: AbsDir, request: FixtureRequest) -> Generator[AbsDir]:
+def local_git_repo(typed_tmp_path: AbsDir, request: FixtureRequest) -> Generator[GitDir]:
     # gitpython-developers/GitPython#2085
     git.Repo.init(os.fspath(typed_tmp_path))
     os.chdir(typed_tmp_path)
-    yield typed_tmp_path
+    yield GitDir(typed_tmp_path)
     os.chdir(request.config.invocation_params.dir)
 
 
@@ -58,3 +61,15 @@ def log_everything() -> None:
         level="TRACE",
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{file.path}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
     )
+
+
+@pytest.fixture
+def log_cleanly(caplog: LogCaptureFixture, log_level: str) -> None:
+    logger.remove()
+    logger.add(caplog.handler, level=log_level, colorize=False, format="{message}")
+
+
+@pytest.fixture
+def yaml_node(raw_yaml: str) -> Node:
+    raw_yaml = textwrap.dedent(raw_yaml).strip()
+    return yaml.compose(raw_yaml, Loader=yaml.SafeLoader)

@@ -1,0 +1,11 @@
+- source: https://github.com/George-Ogden/pytest-dbg
+  commit: abcdef
+  files:
+    - pyproject.toml
+    - requirements.txt
+- source: git@github.com:George-Ogden/actions.git
+  commit: abc123
+  files:
+    - .github/workflows/python-release.yaml
+    - .github/workflows/python-test.yaml
+    - .github/workflows/python-lint.yaml

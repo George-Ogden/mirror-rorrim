@@ -1,15 +1,14 @@
 import tempfile
-import textwrap
 
 import git
 from inline_snapshot import snapshot
 from inline_snapshot._snapshot.undecided_value import UndecidedValue
 import pytest
-import yaml
 from yaml import Node, YAMLError
 
 from .config import MirrorConfig, MirrorFileConfig, MirrorRepoConfig
 from .config_parser import Parser, ParserError
+from .test_utils import normalize_message
 from .typed_path import AbsDir, RelDir, RelFile, Remote
 
 
@@ -38,12 +37,6 @@ def quick_mirror_repo_config(source: str, files: list[tuple[str, str] | str]) ->
 
 def quick_mirror_config(repos: list[MirrorRepoConfig]) -> MirrorConfig:
     return MirrorConfig(repos)
-
-
-@pytest.fixture
-def yaml_node(raw_yaml: str) -> Node:
-    raw_yaml = textwrap.dedent(raw_yaml).strip()
-    return yaml.compose(raw_yaml, Loader=yaml.SafeLoader)
 
 
 def _test_parse_body(
@@ -596,7 +589,7 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
         (
             "syntax_error.yaml",
             snapshot(
-                'while scanning a simple key in "TEST_DATA/syntax_error.yaml", line 4, column 1 could not find expected \':\' in "TEST_DATA/syntax_error.yaml", line 5, column 1'
+                'while scanning a simple key    in "TEST_DATA/syntax_error.yaml", line 4, column 1    could not find expected \':\'    in "TEST_DATA/syntax_error.yaml", line 5, column 1'
             ),
         ),
         (
@@ -605,18 +598,11 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
         ),
     ],
 )
-def test_parse_files(
-    filename: str, expected: MirrorConfig | Exception | str, test_data_path: AbsDir
-) -> None:
+def test_parse_files(filename: str, expected: MirrorConfig | str, test_data_path: AbsDir) -> None:
     filepath = test_data_path / RelFile(filename)
-    if isinstance(expected, str | UndecidedValue | Exception):
+    if isinstance(expected, str | UndecidedValue):
         with pytest.raises((YAMLError, OSError)) as e:
             Parser.parse_file(filepath)
-        error_msg = str(e.value)
-        file_normalized_msg = error_msg.replace(str(test_data_path.path), "TEST_DATA")
-        space_normalized_msg = " ".join(
-            line.strip() for line in file_normalized_msg.splitlines() if line.strip()
-        )
-        assert space_normalized_msg == expected
+        assert normalize_message(e, test_data_path=test_data_path) == expected
     else:
         assert Parser.parse_file(filepath) == expected

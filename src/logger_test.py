@@ -14,10 +14,7 @@ def log_level() -> str:
 
 
 @pytest.fixture(autouse=True)
-def log_cleanly(caplog: LogCaptureFixture, log_level: str) -> None:
-    logger.remove()
-    logger.add(caplog.handler, level=log_level, colorize=False, format="{message}")
-    caplog.set_level(0)
+def log_cleanly(log_cleanly: None) -> None: ...
 
 
 @pytest.mark.typed

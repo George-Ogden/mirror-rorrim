@@ -1,0 +1,16 @@
+# serializer version: 1
+# name: test_diff_apply_versioned_file[file2]
+  '''
+  a
+  b
+  c
+  d
+  e
+  f
+  g
+  h
+  i
+  j
+  
+  '''
+# ---

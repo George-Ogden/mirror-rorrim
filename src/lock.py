@@ -8,8 +8,9 @@ import time
 from typing import ClassVar, Self
 
 from .constants import MIRROR_NAME
-from .state import WriteableState
-from .typed_path import AbsFile, PyFile
+from .state import ReadableState, WriteableState
+from .typed_path import AbsFile
+from .types import PyFile
 
 
 @dataclass(frozen=True)
@@ -26,7 +27,9 @@ class FileSystemLock:
             lock = cls.acquire_non_blocking(file)
             if lock is None:
                 file.close()
-                raise FileExistsError()
+                raise OSError(
+                    f"{filepath.path} is in use by another process. Wait for it to finish then trying again. (You may need to delete this file first.)"
+                )
         except OSError as e:
             if e.errno == errno.EEXIST:
                 raise FileExistsError(
@@ -36,11 +39,31 @@ class FileSystemLock:
         return lock
 
     @classmethod
+    def edit(cls, filepath: AbsFile) -> Self:
+        try:
+            file = open(filepath, "r+")  # noqa: SIM115
+            lock = cls.acquire_non_blocking(file)
+            if lock is None:
+                file.close()
+                raise OSError(
+                    f"{filepath.path} is in use by another process. Wait for it to finish then trying again."
+                )
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                raise FileNotFoundError(
+                    f"{filepath.path} - have you installed {MIRROR_NAME} yet? If not, install it first."
+                ) from None
+            raise e
+        return lock
+
+    @classmethod
     def acquire_non_blocking(cls, file: PyFile) -> Self | None:
         try:
             fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
-            return None
+        except OSError as e:
+            if e.errno == errno.EWOULDBLOCK:
+                return None
+            raise e
         return cls(file)
 
     def release(self) -> None:
@@ -48,9 +71,18 @@ class FileSystemLock:
 
     def unlock(self, state: WriteableState) -> None:
         try:
-            state.dump(self.file)
+            self.dump(state)
         finally:
             self.release()
+
+    def dump(self, state: WriteableState) -> None:
+        self.file.seek(0)
+        state.dump(self.file)
+        self.file.truncate()
+
+    def load[T: ReadableState](self, loader: type[T]) -> T:
+        self.file.seek(0)
+        return loader.load(self.file)
 
 
 @dataclass(frozen=True)

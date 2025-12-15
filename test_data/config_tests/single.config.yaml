@@ -1,0 +1,4 @@
+repos:
+  - source: https://github.com/George-Ogden/dbg
+    files:
+      - pyproject.toml

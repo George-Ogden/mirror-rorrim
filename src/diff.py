@@ -1,40 +1,65 @@
 import contextlib
-from dataclasses import dataclass
+from dataclasses import KW_ONLY, dataclass
 import os
 from typing import Self
 
 import git
 from loguru import logger
 
-from .file import MirrorFile
+from .file import MirrorFile, VersionedMirrorFile
 from .githelper import GitHelper
 from .logger import describe
-from .typed_path import AbsDir
+from .typed_path import GitDir
+from .types import Commit
 
 
 @dataclass
 class Diff:
     file: MirrorFile
+    _: KW_ONLY
     patch: str
+    blob: bytes | None
 
     @classmethod
-    def new_file(cls, repo: AbsDir, file: MirrorFile) -> Self:
+    def from_file(cls, repo: GitDir, file: VersionedMirrorFile) -> Self:
+        return cls.from_commit(file.commit, repo, file.file)
+
+    @classmethod
+    def from_commit(cls, commit: None | Commit, repo: GitDir, file: MirrorFile) -> Self:
+        if commit is None:
+            return cls.empty(repo, file)
+        return cls._from_commit(commit, repo, file)
+
+    @classmethod
+    def _from_commit(cls, commit: Commit, repo: GitDir, file: MirrorFile) -> Self:
+        patch = GitHelper.file_diff(repo, commit, file.source)
+        blob = GitHelper.file_blob(repo, commit, file.source)
+        return cls(file=file, patch=cls.update_patch(patch, file, new=False), blob=blob)
+
+    @classmethod
+    def empty(cls, repo: GitDir, file: MirrorFile) -> Self:
         patch = GitHelper.fresh_diff(repo, file.source)
-        _header, *patch_lines = patch.splitlines(keepends=True)
-        cls.update_patch_lines(patch_lines, file)
-        return cls(
-            file=file,
-            patch="".join(patch_lines),
-        )
+        return cls(file=file, patch=cls.update_patch(patch, file, new=True), blob=None)
 
     @classmethod
-    def update_patch_lines(cls, patch_lines: list[str], file: MirrorFile) -> None:
+    def update_patch(cls, patch: str, file: MirrorFile, *, new: bool) -> str:
+        if not new and not patch:
+            return patch
+        _header, *patch_lines = patch.splitlines(keepends=True)
+        cls.update_patch_lines(patch_lines, file, new=new)
+        return "".join(patch_lines)
+
+    @classmethod
+    def update_patch_lines(cls, patch_lines: list[str], file: MirrorFile, *, new: bool) -> None:
         for i, line in enumerate(patch_lines):
             if line.startswith("+++"):
                 line = cls._addition(file)
+            elif line.startswith("---") and not new:
+                line = cls._deletion(file)
             elif line.startswith("@@"):
-                # Delete header.
-                patch_lines.pop(0)
+                # Insert header.
+                if not new:
+                    patch_lines.insert(0, cls._header(file))
                 return
             else:
                 continue
@@ -44,11 +69,11 @@ class Diff:
 
     @classmethod
     def _update_empty_patch_lines(cls, patch_lines: list[str], file: MirrorFile) -> None:
-        patch_lines.insert(0, cls._empty_header(file))
+        patch_lines.insert(0, cls._header(file))
         patch_lines.extend((cls._addition(file), cls._empty_deletion()))
 
     @classmethod
-    def _empty_header(cls, file: MirrorFile) -> str:
+    def _header(cls, file: MirrorFile) -> str:
         return f"diff --git a/{os.fspath(file.target)} b/{os.fspath(file.target)}\n"
 
     @classmethod
@@ -56,12 +81,27 @@ class Diff:
         return f"+++ b/{os.fspath(file.target)}\n"
 
     @classmethod
+    def _deletion(cls, file: MirrorFile) -> str:
+        return f"--- a/{os.fspath(file.target)}\n"
+
+    @classmethod
     def _empty_deletion(cls) -> str:
         return f"--- {os.devnull}\n"
 
-    def apply(self, local: AbsDir) -> None:
+    def apply(self, local: GitDir) -> None:
+        self._add_file(local)
+        self._hash_blob(local)
+        self._apply_patch(local)
+
+    def _add_file(self, local: GitDir) -> None:
         with contextlib.suppress(git.GitCommandError):
             GitHelper.add(local, self.file.target)
+
+    def _hash_blob(self, local: GitDir) -> None:
+        if self.blob is not None:
+            GitHelper.hash_object(local, self.blob)
+
+    def _apply_patch(self, local: GitDir) -> None:
         with describe(f"Applying patch from {self.file.source} to {self.file.target}"):
             logger.trace(f"patch = {self.patch}")
             GitHelper.apply_patch(local, self.patch)

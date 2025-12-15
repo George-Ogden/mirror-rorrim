@@ -1,0 +1,12 @@
+# serializer version: 1
+# name: test_checker_check[missing_lock-1-expected_log3-INFO]
+  dict({
+    '.mirror.yaml': '''
+      repos:
+        - source: https://github.com/George-Ogden/remote-installer-test-data
+          files:
+            - .mirror.yaml: config-only.yaml
+  
+    ''',
+  })
+# ---

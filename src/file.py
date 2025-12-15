@@ -1,8 +1,13 @@
+import contextlib
 from dataclasses import dataclass
 from typing import Self
 
+from git import Blob, Submodule, Tree
+
 from .config import MirrorFileConfig
-from .typed_path import AbsDir, RelFile
+from .githelper import GitHelper
+from .typed_path import GitDir, RelFile
+from .types import Commit
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -14,14 +19,53 @@ class MirrorFile:
     def from_config(cls, config: MirrorFileConfig) -> Self:
         return cls(source=config.source, target=config.target)
 
-    def exists_in(self, folder: AbsDir) -> bool:
-        path = folder / self.source
-        return path.exists()
+    def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
+        # gitpython-developers/GitPython#2094
+        with contextlib.suppress(KeyError):
+            return GitHelper.tree(folder) / str(self.source.path)
+        return None
 
-    def is_file_in(self, folder: AbsDir) -> bool:
-        path = folder / self.source
-        return path.is_file()
+    def exists_in(self, folder: GitDir) -> bool:
+        return self._git_object(folder) is not None
 
-    def is_folder_in(self, folder: AbsDir) -> bool:
-        path = folder / self.source
-        return path.is_folder()
+    def is_file_in(self, folder: GitDir) -> bool:
+        return isinstance(self._git_object(folder), Blob)
+
+    def is_folder_in(self, folder: GitDir) -> bool:
+        return isinstance(self._git_object(folder), Tree)
+
+
+@dataclass(frozen=True)
+class VersionedMirrorFile:
+    file: MirrorFile
+    commit: Commit | None
+
+    @classmethod
+    def from_config(cls, config: MirrorFileConfig, commit: Commit | None) -> Self:
+        return cls(MirrorFile.from_config(config), commit)
+
+    def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
+        # gitpython-developers/GitPython#2094
+        with contextlib.suppress(KeyError):
+            return GitHelper.tree(folder, self.commit) / str(self.source.path)
+        return None
+
+    @property
+    def source(self) -> RelFile:
+        return self.file.source
+
+    @property
+    def target(self) -> RelFile:
+        return self.file.target
+
+    def exists_in(self, folder: GitDir) -> bool:
+        return self.file.exists_in(folder)
+
+    def is_file_in(self, folder: GitDir) -> bool:
+        return self.file.is_file_in(folder)
+
+    def is_folder_in(self, folder: GitDir) -> bool:
+        return self.file.is_folder_in(folder)
+
+    def existed_in(self, folder: GitDir) -> bool:
+        return isinstance(self._git_object(folder), Blob)

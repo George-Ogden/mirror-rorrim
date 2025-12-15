@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 import functools
 import os
@@ -9,23 +11,28 @@ import click
 from git import InvalidGitRepositoryError
 from loguru import logger
 
+from .checker import MirrorChecker
 from .constants import MIRROR_FILE
 from .githelper import GitHelper
-from .installer import Installer, InstallSource
+from .installer import InstallSource, MirrorInstaller
 from .logger import setup_logger
-from .typed_path import AbsDir, AbsFile, RelFile, Remote
+from .syncer import MirrorSyncer
+from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
+from .types import ExitCode
 
 
-def check_for_errors[**P](fn: Callable[P, None]) -> Callable[P, None]:
+def check_for_errors[**P](fn: Callable[P, ExitCode | None]) -> Callable[P, None]:
     @functools.wraps(fn)
     def main(*args: P.args, **kwargs: P.kwargs) -> None:
         try:
-            fn(*args, **kwargs)
+            exitcode = fn(*args, **kwargs)
         except BaseException as e:
             logger.debug(f"Threw {type(e)}!")
             logger.trace(traceback.format_exc())
             logger.error(f"{type(e).__name__}: {e}")
             sys.exit(1)
+        if exitcode is not None:
+            sys.exit(exitcode)
 
     return main
 
@@ -93,5 +100,33 @@ def install(config_file: str, config_repo: str | None) -> None:
         if isinstance(source_path, AbsFile):
             source_path = RelFile(source_path.path.relative_to("/"))
         source = (source_remote, source_path)
-    installer = Installer(target=AbsDir.cwd(), source=source)
+    installer = MirrorInstaller(target=GitDir.cwd(), source=source)
     installer.install()
+
+
+@main.command()
+@check_for_errors
+def check() -> ExitCode:
+    """Check whether files from Mirror|rorriM are up to date with their remotes.
+
+    \b
+    Example:
+    # Check the current directory.
+    python main.py check
+    """
+    checker = MirrorChecker(target=GitDir.cwd())
+    return checker.check()
+
+
+@main.command()
+@check_for_errors
+def sync() -> None:
+    """Sync files from Mirror|rorriM with their remotes.
+
+    \b
+    Example:
+    # Sync the current directory.
+    python main.py sync
+    """
+    syncer = MirrorSyncer(target=GitDir.cwd())
+    syncer.sync()

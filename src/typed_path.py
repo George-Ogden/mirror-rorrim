@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import functools
 import hashlib
-import io
 import os.path
 from pathlib import Path
+import re
 from typing import Self, overload
 
 
@@ -104,6 +104,16 @@ class AbsDir(TypedPath):
 
 
 @dataclass(frozen=True, slots=True)
+class GitDir(AbsDir):
+    def __init__(self, dir: AbsDir | Path | str, *, check: bool = True) -> None:
+        AbsDir.__init__(self, dir)
+        if check:
+            from .githelper import GitHelper
+
+            GitHelper.repo(self)
+
+
+@dataclass(frozen=True, slots=True)
 class Ext:
     extension: str
 
@@ -120,18 +130,19 @@ class Remote:
 
     @property
     def canonical(self) -> str:
-        return os.path.realpath(self)
+        if os.path.exists(self):
+            # Distinguish common relative paths (eg ".").
+            return os.path.realpath(self)
+        return self._without_trailing_slashes()
+
+    def _without_trailing_slashes(self) -> str:
+        strip_trailing_slash_pattern = r"^(.*?)\/*$"
+        match = re.match(strip_trailing_slash_pattern, self.repo)
+        assert match is not None
+        return match.group(1)
 
     @functools.cached_property
     def hash(self) -> str:
         return hashlib.blake2b(
             bytes(self.canonical, encoding="utf-8", errors="ignore"), usedforsecurity=False
         ).hexdigest()
-
-
-@dataclass(frozen=True, slots=True)
-class Commit:
-    sha: str
-
-
-type PyFile = io.TextIOWrapper

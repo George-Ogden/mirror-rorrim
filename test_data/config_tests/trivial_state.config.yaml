@@ -1,0 +1,5 @@
+repos:
+  - source: https://github.com/George-Ogden/mypy-pytest
+    files:
+      - pyproject.toml
+      - requirements.txt: requirements-dev.txt

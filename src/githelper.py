@@ -1,35 +1,77 @@
+from collections.abc import Sequence
+from dataclasses import dataclass
 import functools
 import os
 import shutil
-from subprocess import PIPE
-from typing import Any
+from subprocess import PIPE, Popen
+import traceback
+from typing import Any, cast
 
 import git
-from git import GitCommandError, GitError, InvalidGitRepositoryError
+from git import GitCommandError, GitError, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
-from git.cmd import _AutoInterrupt as AutoInterrupt
+from git.cmd import _AutoInterrupt as GitCmd
 from loguru import logger
 
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
 from .logger import describe
-from .typed_path import AbsDir, RelFile, Remote
+from .typed_path import AbsDir, GitDir, RelFile, Remote
+from .types import Commit
+from .utils import strict_not_none
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProcessResult:
+    stdout: str
+    stderr: str
+    returncode: int
+    args: Sequence[str]
+
+    def log(self, level: str) -> None:
+        logger.log(level, f"Running: {self.args}")
+        logger.log(level, f"stdout:\n{self.stdout}")
+        logger.log(level, f"stderr:\n{self.stderr}")
+        logger.log(level, f"returncode = {self.returncode}")
 
 
 class GitHelper:
     @classmethod
     @functools.cache
-    def repo(cls, local: AbsDir) -> GitRepo:
+    def repo(cls, local: GitDir) -> GitRepo:
         # Convert to string explicitly to gitpython-developers/GitPython#2085
         return GitRepo(os.fspath(local))
 
     @classmethod
-    def run_command(cls, local: AbsDir, command: str, *args: Any, **kwargs: Any) -> Any:
+    def run_command(cls, local: GitDir, command: str, *args: Any, **kwargs: Any) -> Any:
         return getattr(cls.repo(local).git, command)(*args, **kwargs)
 
     @classmethod
+    def wait(cls, process: Popen | GitCmd) -> ProcessResult:
+        if isinstance(process, GitCmd):
+            process = strict_not_none(process.proc)
+        process.wait()
+        result = ProcessResult(
+            stdout=strict_not_none(git.safe_decode(strict_not_none(process.stdout).read())),
+            stderr=strict_not_none(git.safe_decode(strict_not_none(process.stderr).read())),
+            returncode=process.returncode,
+            args=tuple(cast(Sequence[str], process.args)),
+        )
+        if result.returncode in (0, 1):
+            result.log(level="TRACE")
+        else:
+            result.log(level="DEBUG")
+            raise GitCommandError(
+                tuple(result.args),
+                status=result.returncode,
+                stdout=result.stdout,
+                stderr=result.stderr,
+            )
+        return result
+
+    @classmethod
     @functools.cache
-    def checkout(cls, remote: Remote, local: AbsDir) -> FileSystemSemaphore:
+    def checkout(cls, remote: Remote, local: GitDir) -> FileSystemSemaphore:
         semaphore = FileSystemSemaphore.acquire(local + MIRROR_SEMAPHORE_EXTENSION)
         if semaphore.leader:
             cls._checkout(remote, local)
@@ -38,7 +80,7 @@ class GitHelper:
         return semaphore
 
     @classmethod
-    def _checkout(cls, remote: Remote, local: AbsDir) -> None:
+    def _checkout(cls, remote: Remote, local: GitDir) -> None:
         try:
             cls._clone(remote, local)
         except GitCommandError as e:
@@ -51,24 +93,25 @@ class GitHelper:
                     shutil.rmtree(local, ignore_errors=True)
                     cls._clone(remote, local)
             except Exception as e:
+                traceback.print_exc()
                 logger.debug(e)
                 raise GitError(f"Unable to checkout {remote}.") from None
 
     @classmethod
     def _clone(cls, remote: Remote, local: AbsDir) -> None:
         with describe(f"Cloning {remote} into {local}", error_level="DEBUG"):
-            GitRepo.clone_from(os.fspath(remote), os.fspath(local))
+            GitRepo.clone_from(remote.canonical, os.fspath(local))
 
     @classmethod
-    def _sync(cls, local: AbsDir) -> None:
+    def _sync(cls, local: GitDir) -> None:
         with describe(f"Pulling {cls.repo(local).remote().url} into {local}", error_level="DEBUG"):
             repo = cls.repo(local)
             [fetch_info] = repo.remote().fetch()
             repo.head.reset(fetch_info.commit, working_tree=True, index=True)
 
     @classmethod
-    def fresh_diff(cls, local: AbsDir, file: RelFile) -> str:
-        cmd: AutoInterrupt = cls.run_command(
+    def fresh_diff(cls, local: GitDir, file: RelFile) -> str:
+        cmd: GitCmd = cls.run_command(
             local,
             "diff",
             "--no-index",
@@ -78,27 +121,58 @@ class GitHelper:
             os.fspath(file),
             as_process=True,
         )
-        assert cmd.proc is not None
-        assert cmd.proc.stdout is not None
-        _ret_code = cmd.proc.wait()
-        return git.safe_decode(cmd.proc.stdout.read())
+        return cls.wait(cmd).stdout
 
     @classmethod
-    def add(cls, local: AbsDir, *files: RelFile) -> None:
+    def file_diff(cls, local: GitDir, commit: Commit, file: RelFile) -> str:
+        cmd: GitCmd = cls.run_command(
+            local,
+            "diff",
+            "--full-index",
+            str(commit),
+            "--",
+            os.fspath(file),
+            as_process=True,
+        )
+        return cls.wait(cmd).stdout
+
+    @classmethod
+    def file_blob(cls, local: GitDir, commit: Commit, file: RelFile) -> bytes:
+        # gitpython-developers/GitPython#2094
+        blob = cls.tree(local, commit) / os.fspath(file)
+        return blob.data_stream.read()
+
+    @classmethod
+    def add(cls, local: GitDir, *files: RelFile) -> None:
         # repo.index.add is not syncing
         cls.run_command(local, "add", *(os.fspath(file) for file in files))
 
     @classmethod
-    def apply_patch(cls, local: AbsDir, patch: str) -> None:
-        cmd: AutoInterrupt = cls.run_command(
+    def apply_patch(cls, local: GitDir, patch: str) -> None:
+        cmd: GitCmd = cls.run_command(
             local, "apply", "--allow-empty", "-3", "-", istream=PIPE, as_process=True
         )
         assert cmd.proc is not None
         assert cmd.proc.stdin is not None
         cmd.proc.stdin.write(patch.encode("utf-8"))
         cmd.proc.stdin.close()
-        _ret_code = cmd.proc.wait()
+        cls.wait(cmd)
 
     @classmethod
-    def commit(cls, local: AbsDir) -> str:
+    def hash_object(cls, local: GitDir, blob: bytes) -> None:
+        cmd: GitCmd = cls.run_command(
+            local, "hash-object", "--stdin", "-w", istream=PIPE, as_process=True
+        )
+        assert cmd.proc is not None
+        assert cmd.proc.stdin is not None
+        cmd.proc.stdin.write(blob)
+        cmd.proc.stdin.close()
+        cls.wait(cmd)
+
+    @classmethod
+    def commit(cls, local: GitDir) -> str:
         return cls.repo(local).head.commit.hexsha
+
+    @classmethod
+    def tree(cls, local: GitDir, commit: Commit | None = None) -> Tree:
+        return cls.repo(local).tree(None if commit is None else str(commit))
