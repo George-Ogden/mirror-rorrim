@@ -9,7 +9,11 @@ from .types import ExitCode
 @dataclass(frozen=True)
 class MirrorChecker(ExistingMirrorManager):
     def check(self) -> ExitCode:
-        return self._run(self._check, keep_lock_on_failure=True)
+        lock = self.lock
+        try:
+            return self._check()
+        finally:
+            lock.release()
 
     def _check(self) -> ExitCode:
         return self.mirror.check()
