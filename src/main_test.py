@@ -119,7 +119,7 @@ def remove_git_data(local: GitDir) -> None:
             # commit does not exist
             "sync",
             snapshot(
-                "Updating all files [failed]    RuntimeError: Unable to calculate diff from 0000000000000000000000000000000000000000 for '.pre-commit-config.yaml' (from 'https://github.com/George-Ogden/remote-installer-test-data')."
+                "Updating all files [failed]    RuntimeError: Unable to calculate diff from 0000000 for '.pre-commit-config.yaml' (from 'https://github.com/George-Ogden/remote-installer-test-data')."
             ),
             "syncer_tests/invalid_commit",
         ),

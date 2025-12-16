@@ -129,7 +129,10 @@ def normalize_message(
             error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
             with contextlib.suppress(ValueError):
                 for commit in GitHelper.repo(git_dir).iter_commits():
-                    error_msg = error_msg.replace(commit.hexsha, cast(str, commit.message))
+                    error_msg = error_msg.replace(commit.hexsha, cast(str, commit.message.upper()))
+                    error_msg = error_msg.replace(
+                        commit.hexsha[: Commit.COMMIT_DISPLAY_LENGTH], cast(str, commit.message)
+                    )
     return (" " * 4).join(line.strip() for line in error_msg.splitlines() if line.strip())
 
 

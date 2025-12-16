@@ -129,7 +129,7 @@ class GitHelper:
             local,
             "diff",
             "--full-index",
-            str(commit),
+            commit.sha,
             "--",
             os.fspath(file),
             as_process=True,
@@ -175,4 +175,4 @@ class GitHelper:
 
     @classmethod
     def tree(cls, local: GitDir, commit: Commit | None = None) -> Tree:
-        return cls.repo(local).tree(None if commit is None else str(commit))
+        return cls.repo(local).tree(None if commit is None else commit.sha)
