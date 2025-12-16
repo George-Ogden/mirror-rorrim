@@ -49,7 +49,7 @@ def check_for_errors[**P](fn: Callable[P, ExitCode | None]) -> Callable[P, None]
     "-q",
     "--quiet",
     count=True,
-    help="Display less output (repeat up to 2 times).",
+    help="Display less output (repeat up to 3 times).",
     show_default=False,
 )
 @check_for_errors

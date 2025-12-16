@@ -179,19 +179,21 @@ def test_logger_wrap_failure_trace(caplog: LogCaptureFixture) -> None:
         # -vvvv
         (0, 4, 50),
         # -q
-        (1, 0, "error"),
+        (1, 0, "warning"),
         # -qq
-        (2, 0, "critical"),
+        (2, 0, "error"),
         # -qqq
-        (3, 0, 0),
+        (3, 0, "critical"),
         # -qqqq
         (4, 0, 0),
+        # -qqqqq
+        (5, 0, 0),
         # mixed equally
         (1, 1, "info"),
         # mixed verbose
         (1, 2, "debug"),
         # mixed quiet
-        (2, 1, "error"),
+        (3, 1, "error"),
     ],
 )
 def test_log_level_name(quiet: int, verbose: int, level: str | int) -> None:
