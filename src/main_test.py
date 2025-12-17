@@ -145,6 +145,15 @@ def remove_git_data(local: GitDir) -> None:
             ),
             "syncer_tests/untracked_file",
         ),
+        (
+            # update mirror file
+            "sync",
+            0,
+            snapshot(
+                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files."
+            ),
+            "syncer_tests/update_mirror",
+        ),
     ],
 )
 def test_main(

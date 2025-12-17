@@ -197,10 +197,7 @@ def test_file_system_semaphore_single_process_interleaved(
         leader_lock.release()
 
 
-def single_follower_process(
-    semaphore_path: AbsFile,
-    monitor_path: AbsFile,
-) -> None:
+def single_follower_process(semaphore_path: AbsFile, monitor_path: AbsFile) -> None:
     with mock.patch.object(FileSystemSemaphore, "TIMEOUT_SECONDS", 0.5):
         lock = FileSystemSemaphore.acquire(semaphore_path)
         lock.synchronize(monitor_path)
@@ -209,13 +206,9 @@ def single_follower_process(
 
 @pytest.mark.slow
 def test_file_system_semaphore_leader_crash(
-    tmp_lock_path: AbsFile,
-    tmp_extra_lock_path: AbsFile,
+    tmp_lock_path: AbsFile, tmp_extra_lock_path: AbsFile
 ) -> None:
-    follower = Process(
-        target=single_follower_process,
-        args=(tmp_lock_path, tmp_extra_lock_path),
-    )
+    follower = Process(target=single_follower_process, args=(tmp_lock_path, tmp_extra_lock_path))
     with open(tmp_lock_path, "x"), open(tmp_extra_lock_path, "x"):
         ...
     leader_lock = FileSystemSemaphore.acquire(tmp_lock_path)

@@ -126,13 +126,7 @@ class GitHelper:
     @classmethod
     def file_diff(cls, local: GitDir, commit: Commit, file: RelFile) -> str:
         cmd: GitCmd = cls.run_command(
-            local,
-            "diff",
-            "--full-index",
-            commit.sha,
-            "--",
-            os.fspath(file),
-            as_process=True,
+            local, "diff", "--full-index", commit.sha, "--", os.fspath(file), as_process=True
         )
         return cls.wait(cmd).stdout
 

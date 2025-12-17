@@ -53,11 +53,7 @@ def test_typed_path_join(
 @pytest.mark.parametrize("path_type", PATH_TYPES)
 @pytest.mark.parametrize(
     "name, exists, is_file, is_folder",
-    [
-        ("", True, False, True),
-        ("exists", True, True, False),
-        ("doesnotexist", False, False, False),
-    ],
+    [("", True, False, True), ("exists", True, True, False), ("doesnotexist", False, False, False)],
 )
 @pytest.mark.parametrize("property", ["exists", "is_file", "is_folder"])
 def test_path_properties(
@@ -111,11 +107,7 @@ def test_path_properties(
             False,
         ),
         # different files
-        (
-            "a/b/c",
-            "c/b/a",
-            False,
-        ),
+        ("a/b/c", "c/b/a", False),
     ],
 )
 def test_remote_hash(a: str, b: str, same: bool) -> None:
@@ -128,11 +120,7 @@ def test_remote_hash(a: str, b: str, same: bool) -> None:
 @pytest.mark.parametrize("path_type", PATH_TYPES)
 @pytest.mark.parametrize("path", ["basic.txt", "folder/.git/file_or_folder"])
 @pytest.mark.parametrize("extension", [".tmp", ".bkp"])
-def test_path_add(
-    path_type: type[TypedPath],
-    path: str,
-    extension: str,
-) -> None:
+def test_path_add(path_type: type[TypedPath], path: str, extension: str) -> None:
     file_types = {AbsFile: AbsFile, RelFile: RelFile, AbsDir: AbsFile, RelDir: RelFile}
     expected = file_types[path_type]
     left = _make_path(path_type, path)

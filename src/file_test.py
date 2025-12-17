@@ -80,9 +80,7 @@ def versioned_file_existed_as_dir_test_case(git_dir: GitDir) -> VersionedMirrorF
     ],
 )
 def test_versioned_file_existed_in(
-    setup_repo: Callable[[GitDir], VersionedMirrorFile],
-    exists: bool,
-    local_git_repo: GitDir,
+    setup_repo: Callable[[GitDir], VersionedMirrorFile], exists: bool, local_git_repo: GitDir
 ) -> None:
     versioned_file = setup_repo(local_git_repo)
     assert versioned_file.existed_in(local_git_repo) == exists

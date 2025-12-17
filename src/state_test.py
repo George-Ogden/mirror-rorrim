@@ -226,10 +226,7 @@ def test_construct_state[T](cls: type[T], yaml_node: Node, expected: T | None) -
                 ]
             ),
         ),
-        (
-            "syntax_error.yaml",
-            None,
-        ),
+        ("syntax_error.yaml", None),
         ("execution.yaml", None),
         ("missing_key.yaml", None),
         ("duplicate_source.yaml", None),

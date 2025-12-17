@@ -561,14 +561,8 @@ def test_parse_mirror_config(yaml_node: Node, expected: MirrorConfig | str) -> N
                                 ".github/workflows/python-release.yaml",
                                 ".github/workflows/release.yaml",
                             ),
-                            (
-                                ".github/workflows/python-test.yaml",
-                                ".github/workflows/test.yaml",
-                            ),
-                            (
-                                ".github/workflows/lint.yaml",
-                                ".github/workflows/lint.yaml",
-                            ),
+                            (".github/workflows/python-test.yaml", ".github/workflows/test.yaml"),
+                            (".github/workflows/lint.yaml", ".github/workflows/lint.yaml"),
                         ],
                     ),
                 ]

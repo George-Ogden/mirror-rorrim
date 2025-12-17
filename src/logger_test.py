@@ -1,11 +1,13 @@
+from collections.abc import Callable, Generator
 import contextlib
 import textwrap
+from typing import Any
 
 from loguru import logger
 import pytest
 from pytest import LogCaptureFixture
 
-from .logger import describe, log_level_name
+from .logger import ProgramState, describe, log_level_name
 
 
 @pytest.fixture
@@ -201,3 +203,37 @@ def test_log_level_name(quiet: int, verbose: int, level: str | int) -> None:
         assert log_level_name(quiet, verbose) == level.upper()
     else:
         assert log_level_name(quiet, verbose) == level
+
+
+@pytest.fixture
+def remove_command() -> Generator[None]:
+    with contextlib.suppress(AttributeError):
+        del ProgramState.command
+    yield
+    with contextlib.suppress(AttributeError):
+        del ProgramState.command
+
+
+def install(arg1: int, arg2: Any) -> None: ...
+def sync(foo: str, bar: str) -> None: ...
+def notacommand(*args: Any) -> int:
+    return 0
+
+
+@pytest.mark.parametrize(
+    "command, name", [(install, "install"), (sync, "sync"), (notacommand, None)]
+)
+def test_record_command(command: Callable, name: str | None, remove_command: None) -> None:
+    with pytest.raises(AttributeError):
+        ProgramState.command  # noqa: B018
+    if name is None:
+        with pytest.raises(TypeError):
+            ProgramState.record_command(command)
+        with pytest.raises(AttributeError):
+            ProgramState.command  # noqa: B018
+    else:
+        run_command = ProgramState.record_command(command)
+        with pytest.raises(AttributeError):
+            ProgramState.command  # noqa: B018
+        run_command(1, 2)
+        assert ProgramState.command == name

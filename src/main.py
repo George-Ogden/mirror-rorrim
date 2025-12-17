@@ -15,7 +15,7 @@ from .checker import MirrorChecker
 from .constants import MIRROR_FILE
 from .githelper import GitHelper
 from .installer import InstallSource, MirrorInstaller
-from .logger import setup_logger
+from .logger import ProgramState, setup_logger
 from .syncer import MirrorSyncer
 from .typed_path import AbsDir, AbsFile, GitDir, RelFile, Remote
 from .types import ExitCode
@@ -71,6 +71,7 @@ def check_git_repo() -> None:
 @click.option("--config-file", "--config", "-c", default=os.fspath(MIRROR_FILE))
 @click.option("--config-repo", default=None)
 @check_for_errors
+@ProgramState.record_command
 def install(config_file: str, config_repo: str | None) -> None:
     """Setup Mirror|rorriM for the first time in the current directory.
 
@@ -106,6 +107,7 @@ def install(config_file: str, config_repo: str | None) -> None:
 
 @main.command()
 @check_for_errors
+@ProgramState.record_command
 def check() -> ExitCode:
     """Check whether files from Mirror|rorriM are up to date with their remotes.
 
@@ -120,6 +122,7 @@ def check() -> ExitCode:
 
 @main.command()
 @check_for_errors
+@ProgramState.record_command
 def sync() -> None:
     """Sync files from Mirror|rorriM with their remotes.
 

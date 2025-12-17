@@ -45,14 +45,8 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
                                 ".github/workflows/python-release.yaml",
                                 ".github/workflows/release.yaml",
                             ),
-                            (
-                                ".github/workflows/python-test.yaml",
-                                ".github/workflows/test.yaml",
-                            ),
-                            (
-                                ".github/workflows/lint.yaml",
-                                ".github/workflows/lint.yaml",
-                            ),
+                            (".github/workflows/python-test.yaml", ".github/workflows/test.yaml"),
+                            (".github/workflows/lint.yaml", ".github/workflows/lint.yaml"),
                         ],
                     ),
                 ]
@@ -65,7 +59,7 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
                     quick_mirror_repo(
                         "https://github.com/George-Ogden/mypy-pytest",
                         ["pyproject.toml", ("requirements-dev.txt", "requirements.txt")],
-                    ),
+                    )
                 ]
             ),
         ),
@@ -90,10 +84,7 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
                                 ".github/workflows/test.yaml",
                                 "abc123",
                             ),
-                            (
-                                ".github/workflows/lint.yaml",
-                                ".github/workflows/lint.yaml",
-                            ),
+                            (".github/workflows/lint.yaml", ".github/workflows/lint.yaml"),
                         ],
                     ),
                 ]

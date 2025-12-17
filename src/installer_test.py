@@ -23,10 +23,7 @@ def quick_installer(
     source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
     source_path = RelFile(source_path or MIRROR_FILE)
     source = source_path if source_remote is None else (source_remote, source_path)
-    return MirrorInstaller(
-        source=source,
-        target=GitDir(target or AbsDir.cwd()),
-    )
+    return MirrorInstaller(source=source, target=GitDir(target or AbsDir.cwd()))
 
 
 @pytest.mark.parametrize(

@@ -26,10 +26,7 @@ def quick_syncer(target: None | str | AbsDir) -> MirrorSyncer:
     ],
 )
 def test_installer_install(
-    test_name: str,
-    local_git_repo: GitDir,
-    test_data_path: AbsDir,
-    snapshot: SnapshotAssertion,
+    test_name: str, local_git_repo: GitDir, test_data_path: AbsDir, snapshot: SnapshotAssertion
 ) -> None:
     syncer = quick_syncer(local_git_repo)
     setup_repo(local_git_repo, test_data_path / RelDir(test_name))
