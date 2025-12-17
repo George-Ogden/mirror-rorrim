@@ -15,6 +15,7 @@ from syrupy.types import SnapshotIndex
 import yaml
 from yaml import Node
 
+from .logger import ProgramState
 from .typed_path import AbsDir, AbsFile, GitDir, RelDir, RelFile
 
 
@@ -73,3 +74,8 @@ def log_cleanly(caplog: LogCaptureFixture, log_level: str) -> None:
 def yaml_node(raw_yaml: str) -> Node:
     raw_yaml = textwrap.dedent(raw_yaml).strip()
     return yaml.compose(raw_yaml, Loader=yaml.SafeLoader)
+
+
+@pytest.fixture(autouse=True)
+def set_mock_command() -> None:
+    ProgramState.command = "test"  # type: ignore [assignment]

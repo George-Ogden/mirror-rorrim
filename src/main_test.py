@@ -110,6 +110,20 @@ def remove_git_data(local: GitDir) -> None:
             ),
             remove_git_data,
         ),
+        (
+            # overwrite local mirror file
+            "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
+            0,
+            snapshot("'.mirror.yaml' has been overwritten during installation."),
+            "installer_tests/remote_config_overwrite",
+        ),
+        (
+            # overwrite local mirror file with itself
+            "install",
+            0,
+            snapshot(""),
+            "installer_tests/remote_config_overwrite",
+        ),
         # sync tests
         (
             # works fine
