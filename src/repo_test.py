@@ -17,12 +17,7 @@ from .config_parser_test import quick_mirror_repo_config
 from .githelper import GitHelper
 from .repo import MirrorRepo, MissingFileError
 from .state import MirrorRepoState
-from .test_utils import (
-    add_commit,
-    normalize_message,
-    quick_mirror_repo,
-    quick_mirror_repo_state,
-)
+from .test_utils import add_commit, normalize_message, quick_mirror_repo, quick_mirror_repo_state
 from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
 from .types import Commit
 
@@ -77,10 +72,7 @@ def checkout_not_a_git_repo_test_case() -> tuple[
     "setup_repo, error",
     [
         pytest.param(
-            lambda: quick_mirror_repo(
-                "https://github.com/George-Ogden/actions/",
-                ["version.txt"],
-            ),
+            lambda: quick_mirror_repo("https://github.com/George-Ogden/actions/", ["version.txt"]),
             None,
             marks=[pytest.mark.slow],
         ),

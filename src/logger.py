@@ -1,13 +1,16 @@
+import abc
 from collections.abc import Callable
 from dataclasses import KW_ONLY, dataclass
 import functools
 import inspect
 import sys
 from types import TracebackType
+from typing import ClassVar, Literal
 
 from loguru import logger
 
 from .constants import DONE_SUFFIX, FAILURE_SUFFIX, LOADING_SUFFIX
+from .utils import strict_cast
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,12 +70,32 @@ class describe:  # noqa: N801
         return logging_fn
 
 
+class ProgramState(abc.ABC):
+    type CommandName = Literal["install", "sync", "check"]
+    command: ClassVar[CommandName]
+
+    @abc.abstractmethod
+    def __init__(self) -> None: ...
+    @classmethod
+    def record_command[**P, R](cls, command: Callable[P, R]) -> Callable[P, R]:
+        command_name = strict_cast(cls.CommandName, command.__name__)
+
+        @functools.wraps(command)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            cls.command = command_name
+            return command(*args, **kwargs)
+
+        return wrapper
+
+
 def log_level_name(quiet: int, verbose: int) -> str | int:
     match verbose - quiet:
-        case -2:
+        case -3:
             return "CRITICAL"
-        case -1:
+        case -2:
             return "ERROR"
+        case -1:
+            return "WARNING"
         case 0:
             return "INFO"
         case 1:

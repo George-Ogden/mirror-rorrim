@@ -21,7 +21,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
 @pytest.mark.parametrize(
     "test_name, exitcode, expected_log",
     [
-        pytest.param(
+        (
             "up_to_date",
             0,
             snapshot(
@@ -32,7 +32,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
             "behind",
             1,
             snapshot(
-                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 84b08564197d9a076d4c66ff58a613dd4940cdd7, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376b8eac3488bb73ae2e9169de3c6bcb983d."
+                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 84b0856, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376."
             ),
             marks=[pytest.mark.slow],
         ),
@@ -61,7 +61,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
             "invalid_commit",
             1,
             snapshot(
-                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 0000000000000000000000000000000000000000, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376b8eac3488bb73ae2e9169de3c6bcb983d."
+                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 0000000, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376."
             ),
         ),
         (

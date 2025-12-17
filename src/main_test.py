@@ -22,18 +22,20 @@ def remove_git_data(local: GitDir) -> None:
 
 
 @pytest.mark.parametrize(
-    "args, expected, setup_repo",
+    "args, exitcode ,logs, setup_repo",
     [
         # install tests
         (
             # abs path to config
             "install --config .mirror.yaml",
-            None,
+            0,
+            snapshot(""),
             "installer_tests/empty_repo_with_config",
         ),
         (
             # config is missing
             "install --config-repo https://github.com/George-Ogden/concurrent-algorithms",
+            1,
             snapshot(
                 "Syncing all repos [failed]    MissingFileError: '.mirror.yaml' could not be found from 'https://github.com/George-Ogden/concurrent-algorithms'."
             ),
@@ -42,6 +44,7 @@ def remove_git_data(local: GitDir) -> None:
         (
             # config is a folder
             "install --config-repo https://github.com/George-Ogden/dbg --config test_data",
+            1,
             snapshot(
                 "Syncing all repos [failed]    IsADirectoryError: 'test_data' from 'https://github.com/George-Ogden/dbg' is a directory."
             ),
@@ -50,6 +53,7 @@ def remove_git_data(local: GitDir) -> None:
         (
             # not a local repo
             "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
+            1,
             snapshot(
                 "InvalidGitRepositoryError: 'GIT_DIR' is not a git repository, please run `git init` before installing."
             ),
@@ -58,12 +62,14 @@ def remove_git_data(local: GitDir) -> None:
         (
             # abs path + remote (valid)
             "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data/ --config-file /config-only.yaml",
-            None,
+            0,
+            snapshot(""),
             None,
         ),
         (
             # abs path + remote (invalid)
             "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data/ --config-file /.mirror.yaml",
+            1,
             snapshot(
                 "Syncing all repos [failed]    MissingFileError: '.mirror.yaml' could not be found from 'https://github.com/George-Ogden/mirror-rorrim-test-data/'."
             ),
@@ -72,6 +78,7 @@ def remove_git_data(local: GitDir) -> None:
         (
             # invalid config
             "install --config-repo https://github.com/George-Ogden/dbg --config-file requirements.txt",
+            1,
             snapshot(
                 "Parsing config [failed]    Syncing all repos [failed]    ParserError: An unexpected error occurred during parsing @ requirements.txt:1:1: expected mirror mapping, got string."
             ),
@@ -80,6 +87,7 @@ def remove_git_data(local: GitDir) -> None:
         (
             # not a local repo
             "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
+            1,
             snapshot(
                 "FileExistsError: GIT_DIR/.mirror.lock - have you already installed Mirror|rorriM? If not, delete this file and try again."
             ),
@@ -89,27 +97,45 @@ def remove_git_data(local: GitDir) -> None:
         (
             # works fine
             "check",
-            None,
+            0,
+            snapshot(""),
             "checker_tests/up_to_date",
         ),
         (
             # not a git repo
             "check",
+            1,
             snapshot(
                 "InvalidGitRepositoryError: 'GIT_DIR' is not a git repository, please run `git init` before installing."
             ),
             remove_git_data,
         ),
+        (
+            # overwrite local mirror file
+            "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
+            0,
+            snapshot("'.mirror.yaml' has been overwritten during installation."),
+            "installer_tests/remote_config_overwrite",
+        ),
+        (
+            # overwrite local mirror file with itself
+            "install",
+            0,
+            snapshot(""),
+            "installer_tests/remote_config_overwrite",
+        ),
         # sync tests
         (
             # works fine
             "sync",
-            None,
+            0,
+            snapshot(""),
             "syncer_tests/behind",
         ),
         (
             # not a git repo
             "sync",
+            1,
             snapshot(
                 "InvalidGitRepositoryError: 'GIT_DIR' is not a git repository, please run `git init` before installing."
             ),
@@ -118,24 +144,36 @@ def remove_git_data(local: GitDir) -> None:
         (
             # commit does not exist
             "sync",
+            1,
             snapshot(
-                "Updating all files [failed]    RuntimeError: Unable to calculate diff from 0000000000000000000000000000000000000000 for '.pre-commit-config.yaml' (from 'https://github.com/George-Ogden/remote-installer-test-data')."
+                "Updating all files [failed]    RuntimeError: Unable to calculate diff from 0000000 for '.pre-commit-config.yaml' (from 'https://github.com/George-Ogden/remote-installer-test-data')."
             ),
             "syncer_tests/invalid_commit",
         ),
         (
             # file does not exist
             "sync",
+            1,
             snapshot(
                 "Checking out all repos [failed]    Syncing all repos [failed]    MissingFileError: 'filedoesnotexist' could not be found from 'https://github.com/George-Ogden/remote-installer-test-data'."
             ),
             "syncer_tests/untracked_file",
         ),
+        (
+            # update mirror file
+            "sync",
+            0,
+            snapshot(
+                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files."
+            ),
+            "syncer_tests/update_mirror",
+        ),
     ],
 )
 def test_main(
     args: str,
-    expected: str | None,
+    exitcode: int,
+    logs: str,
     setup_repo: Callable[[GitDir], None] | str | RelDir | None,
     local_git_repo: GitDir,
     test_data_path: AbsDir,
@@ -149,11 +187,11 @@ def test_main(
     mirror_existed_before = (local_git_repo / MIRROR_LOCK).exists()
     with pytest.raises(SystemExit) as e:
         main.main(argv, prog_name=MIRROR_NAME)
-    if expected is None:
+    if exitcode == 0:
         assert e.value.code == 0
         assert (local_git_repo / MIRROR_LOCK).exists()
     else:
         assert e.value.code != 0
         assert (local_git_repo / MIRROR_LOCK).exists() == mirror_existed_before
-        out, _err = capsys.readouterr()
-        assert normalize_message(out, git_dir=local_git_repo) == expected
+    out, _err = capsys.readouterr()
+    assert normalize_message(out, git_dir=local_git_repo) == logs

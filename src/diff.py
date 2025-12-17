@@ -6,9 +6,10 @@ from typing import Self
 import git
 from loguru import logger
 
+from .constants import MIRROR_FILE
 from .file import MirrorFile, VersionedMirrorFile
 from .githelper import GitHelper
-from .logger import describe
+from .logger import ProgramState, describe
 from .typed_path import GitDir
 from .types import Commit
 
@@ -105,3 +106,7 @@ class Diff:
         with describe(f"Applying patch from {self.file.source} to {self.file.target}"):
             logger.trace(f"patch = {self.patch}")
             GitHelper.apply_patch(local, self.patch)
+            if self.patch and self.file.target == MIRROR_FILE and ProgramState.command == "sync":
+                logger.warning(
+                    f"{MIRROR_FILE} modified while syncing. Please merge any conflicts then rerun to sync any added files."
+                )

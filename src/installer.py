@@ -4,6 +4,8 @@ import functools
 import shutil
 from typing import cast
 
+from loguru import logger
+
 from .config import MirrorConfig
 from .config_parser import Parser
 from .constants import MIRROR_FILE
@@ -14,6 +16,7 @@ from .manager import MirrorManager
 from .mirror import Mirror
 from .repo import MirrorRepo
 from .typed_path import AbsFile, RelFile, Remote
+from .utils import strict_cast
 
 type InstallSource = AbsFile | RelFile | tuple[Remote, RelFile]
 
@@ -76,18 +79,24 @@ class MirrorInstaller(MirrorManager):
                 return cast(RelFile, path)
         return cast(RelFile | AbsFile, self.source)
 
+    @property
+    def mirror_source(self) -> RelFile | AbsFile:
+        return (
+            self.source_path
+            if self.source_repo is None
+            else self.source_repo.cache / strict_cast(RelFile, self.source_path)
+        )
+
+    def copy_mirror_file(self) -> None:
+        mirror_target = self.target / MIRROR_FILE
+        mirror_file_existed = (mirror_target).exists()
+        with contextlib.suppress(shutil.SameFileError):
+            shutil.copy2(self.mirror_source, self.target / MIRROR_FILE)
+            if mirror_file_existed:
+                logger.warning(f"{MIRROR_FILE} has been overwritten during installation.")
+
     def _update_all(self) -> None:
         self.copy_mirror_file()
         if self.source_repo is not None:
             self.source_repo.update(self.target)
         super()._update_all()
-
-    def copy_mirror_file(self) -> None:
-        with contextlib.suppress(shutil.SameFileError):
-            if self.source_repo is None:
-                shutil.copy2(self.source_path, self.target / MIRROR_FILE)
-            else:
-                shutil.copy2(
-                    self.source_repo.cache / cast(RelFile, self.source_path),
-                    self.target / MIRROR_FILE,
-                )

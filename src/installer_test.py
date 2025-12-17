@@ -23,10 +23,7 @@ def quick_installer(
     source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
     source_path = RelFile(source_path or MIRROR_FILE)
     source = source_path if source_remote is None else (source_remote, source_path)
-    return MirrorInstaller(
-        source=source,
-        target=GitDir(target or AbsDir.cwd()),
-    )
+    return MirrorInstaller(source=source, target=GitDir(target or AbsDir.cwd()))
 
 
 @pytest.mark.parametrize(
@@ -57,9 +54,10 @@ def test_installer_source_repo(
     [
         pytest.param("empty_repo_with_config", None, marks=[pytest.mark.slow]),
         pytest.param("repo_with_multiple_configs", (None, "config.yaml"), marks=[pytest.mark.slow]),
-        (
+        pytest.param(
             "remote_only",
             ("https://github.com/George-Ogden/mirror-rorrim-test-data", "config-only.yaml"),
+            marks=[pytest.mark.slow],
         ),
         (
             "remote_config_overwrite",

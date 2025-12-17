@@ -127,11 +127,7 @@ def test_diff_from_commit_empty(local_git_repo: GitDir) -> None:
     add_commit(local_git_repo, dict(file1="file1"))
     file = quick_mirror_file("file1", "file2")
     diff = Diff.from_commit(initial_commit, local_git_repo, file)
-    assert diff == Diff(
-        file,
-        patch="",
-        blob=b"file1",
-    )
+    assert diff == Diff(file, patch="", blob=b"file1")
 
 
 @pytest.mark.parametrize(

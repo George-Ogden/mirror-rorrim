@@ -1,0 +1,5 @@
+repos:
+  - source: https://github.com/George-Ogden/remote-installer-test-data
+    files:
+      - LICENSE
+      - .mirror.yaml: config-only.yaml
