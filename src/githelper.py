@@ -5,7 +5,7 @@ import os
 import shutil
 from subprocess import PIPE, Popen
 import traceback
-from typing import Any, cast
+from typing import Any, Never, cast
 
 import git
 from git import GitCommandError, GitError, InvalidGitRepositoryError, Tree
@@ -43,8 +43,35 @@ class GitHelper:
         return GitRepo(os.fspath(local))
 
     @classmethod
-    def run_command(cls, local: GitDir, command: str, *args: Any, **kwargs: Any) -> Any:
-        return getattr(cls.repo(local).git, command)(*args, **kwargs)
+    def run_command(
+        cls,
+        local: GitDir,
+        command: str,
+        *args: Any,
+        stdin: str | bytes | None = None,
+        as_process: Never = cast(Never, None),
+        istream: Never = cast(Never, None),
+        **kwargs: Any,
+    ) -> ProcessResult:
+        if stdin is not None:
+            kwargs["istream"] = PIPE
+        cmd: GitCmd = getattr(cls.repo(local).git, command)(*args, **kwargs, as_process=True)
+        cls.pipe_stdin(cmd, stdin)
+        return cls.wait(cmd)
+
+    @classmethod
+    def pipe_stdin(cls, cmd: GitCmd, stdin: str | bytes | None) -> None:
+        if stdin is not None:
+            cls._pipe_stdin(cmd, stdin)
+
+    @classmethod
+    def _pipe_stdin(cls, cmd: GitCmd, stdin: str | bytes) -> None:
+        assert cmd.proc is not None
+        assert cmd.proc.stdin is not None
+        if isinstance(stdin, str):
+            stdin = stdin.encode("utf-8")
+        cmd.proc.stdin.write(stdin)
+        cmd.proc.stdin.close()
 
     @classmethod
     def wait(cls, process: Popen | GitCmd) -> ProcessResult:
@@ -111,24 +138,15 @@ class GitHelper:
 
     @classmethod
     def fresh_diff(cls, local: GitDir, file: RelFile) -> str:
-        cmd: GitCmd = cls.run_command(
-            local,
-            "diff",
-            "--no-index",
-            "--full-index",
-            "--",
-            os.devnull,
-            os.fspath(file),
-            as_process=True,
-        )
-        return cls.wait(cmd).stdout
+        return cls.run_command(
+            local, "diff", "--no-index", "--full-index", "--", os.devnull, os.fspath(file)
+        ).stdout
 
     @classmethod
     def file_diff(cls, local: GitDir, commit: Commit, file: RelFile) -> str:
-        cmd: GitCmd = cls.run_command(
-            local, "diff", "--full-index", commit.sha, "--", os.fspath(file), as_process=True
-        )
-        return cls.wait(cmd).stdout
+        return cls.run_command(
+            local, "diff", "--full-index", commit.sha, "--", os.fspath(file)
+        ).stdout
 
     @classmethod
     def file_blob(cls, local: GitDir, commit: Commit, file: RelFile) -> bytes:
@@ -143,25 +161,11 @@ class GitHelper:
 
     @classmethod
     def apply_patch(cls, local: GitDir, patch: str) -> None:
-        cmd: GitCmd = cls.run_command(
-            local, "apply", "--allow-empty", "-3", "-", istream=PIPE, as_process=True
-        )
-        assert cmd.proc is not None
-        assert cmd.proc.stdin is not None
-        cmd.proc.stdin.write(patch.encode("utf-8"))
-        cmd.proc.stdin.close()
-        cls.wait(cmd)
+        cls.run_command(local, "apply", "--allow-empty", "-3", "-", stdin=patch)
 
     @classmethod
     def hash_object(cls, local: GitDir, blob: bytes) -> None:
-        cmd: GitCmd = cls.run_command(
-            local, "hash-object", "--stdin", "-w", istream=PIPE, as_process=True
-        )
-        assert cmd.proc is not None
-        assert cmd.proc.stdin is not None
-        cmd.proc.stdin.write(blob)
-        cmd.proc.stdin.close()
-        cls.wait(cmd)
+        cls.run_command(local, "hash-object", "--stdin", "-w", stdin=blob)
 
     @classmethod
     def commit(cls, local: GitDir) -> str:
