@@ -54,9 +54,10 @@ def test_installer_source_repo(
     [
         pytest.param("empty_repo_with_config", None, marks=[pytest.mark.slow]),
         pytest.param("repo_with_multiple_configs", (None, "config.yaml"), marks=[pytest.mark.slow]),
-        (
+        pytest.param(
             "remote_only",
             ("https://github.com/George-Ogden/mirror-rorrim-test-data", "config-only.yaml"),
+            marks=[pytest.mark.slow],
         ),
         (
             "remote_config_overwrite",

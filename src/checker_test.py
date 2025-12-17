@@ -21,7 +21,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
 @pytest.mark.parametrize(
     "test_name, exitcode, expected_log",
     [
-        pytest.param(
+        (
             "up_to_date",
             0,
             snapshot(
