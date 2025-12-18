@@ -78,19 +78,19 @@ def install(config_file: str, config_repo: str | None) -> None:
     \b
     Examples:
     # Install using local config.
-    python main.py install
+    mirror install
 
     \b
     # Install using the config from the remote repo.
-    python main.py install ./mirror/ --config-repo https://myrepos.com/mirror
+    mirror install ./mirror/ --config-repo https://myrepos.com/mirror
 
     \b
     # Install using the Python config from the remote repo.
-    python main.py install --config-repo https://myrepos.com/mirror --config .python-mirror.yaml
+    mirror install --config-repo https://myrepos.com/mirror --config .python-mirror.yaml
 
     \b
     # Install using a local config.
-    python main.py install --config /configs/mirror-config.yml
+    mirror install --config /configs/mirror-config.yml
     """
     config_path = Path(config_file)
     source_path = AbsFile(config_path) if config_path.is_absolute() else RelFile(config_path)
@@ -114,7 +114,7 @@ def check() -> ExitCode:
     \b
     Example:
     # Check the current directory.
-    python main.py check
+    mirror check
     """
     checker = MirrorChecker(target=GitDir.cwd())
     return checker.check()
@@ -129,7 +129,7 @@ def sync() -> None:
     \b
     Example:
     # Sync the current directory.
-    python main.py sync
+    mirror sync
     """
     syncer = MirrorSyncer(target=GitDir.cwd())
     syncer.sync()

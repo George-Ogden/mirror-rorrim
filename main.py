@@ -1,3 +1,3 @@
-from src import main_cli
+from mirror import main_cli
 
 main_cli()

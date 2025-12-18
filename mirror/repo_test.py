@@ -29,7 +29,7 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
 
 @pytest.fixture
 def mocked_cache_dir(typed_tmp_path: AbsDir) -> Generator[AbsDir]:
-    with mock.patch("src.repo.MIRROR_CACHE", typed_tmp_path):
+    with mock.patch("mirror.repo.MIRROR_CACHE", typed_tmp_path):
         yield typed_tmp_path
 
 

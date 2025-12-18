@@ -9,3 +9,15 @@ dynamic = ["dependencies", "version"]
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 version = {file = ["version.txt"]}
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mirror*"]
+exclude = ["test*"]
+
+[project.scripts]
+mirror = "mirror:main_cli"
