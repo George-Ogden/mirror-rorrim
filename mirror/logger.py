@@ -103,9 +103,9 @@ def log_level_name(quiet: int, verbose: int) -> str | int:
         case 2:
             return "TRACE"
         case n if n < 0:
-            return 0
-        case n if n > 0:
             return 50
+        case n if n > 0:
+            return 0
     raise TypeError()
 
 

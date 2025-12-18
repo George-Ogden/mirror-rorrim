@@ -177,9 +177,9 @@ def test_logger_wrap_failure_trace(caplog: LogCaptureFixture) -> None:
         # -vv
         (0, 2, "trace"),
         # -vvv
-        (0, 3, 50),
+        (0, 3, 0),
         # -vvvv
-        (0, 4, 50),
+        (0, 4, 0),
         # -q
         (1, 0, "warning"),
         # -qq
@@ -187,9 +187,9 @@ def test_logger_wrap_failure_trace(caplog: LogCaptureFixture) -> None:
         # -qqq
         (3, 0, "critical"),
         # -qqqq
-        (4, 0, 0),
+        (4, 0, 50),
         # -qqqqq
-        (5, 0, 0),
+        (5, 0, 50),
         # mixed equally
         (1, 1, "info"),
         # mixed verbose
