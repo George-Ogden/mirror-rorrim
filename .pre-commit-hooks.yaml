@@ -1,7 +1,8 @@
 - id: mirror-rorrim
   name: mirror check
   language: python
-  entry: mirror check
+  entry: mirror -q check
+  flags: [--pre-commit]
   always_run: true
   pass_filenames: false
   require_serial: true
