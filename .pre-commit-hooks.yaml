@@ -1,4 +1,4 @@
-- id: mirror-rorrim
+- id: mirror-check
   name: mirror check
   language: python
   entry: mirror -q check

@@ -64,6 +64,17 @@ mirror sync
 Make updates in the repos you're syncing from.
 _You can still edit your local files manually, but you may need to resolve conflicts when you sync._
 
+### Pre-Commit
+
+If you use, `pre-commit`, consider adding this repo as a hook to check for updates:
+
+```yaml
+- repo: https://github.com/George-Ogden/mirror-rorrim/
+  rev: v0.3.1
+  hooks:
+    - id: mirror-check
+```
+
 ## Contributing
 
 Use GitHub for bugs/feature requests.
