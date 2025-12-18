@@ -19,9 +19,9 @@ You have the same problem? Just follow these three steps:
 uv pip install git+https://github.com/George-Ogden/mirror-rorrim
 ```
 
-(miss off the `uv` if you're still using legacy `pip`).
+(miss off the `uv` if you're still using `pip`).
 
-1. Make a configuration file called `.mirror.yaml` (optional as you can install with a pre-made one):
+1. Make a configuration file called `.mirror.yaml` in the root of your repository (skip this step if you already have a config you want to use):
 
 ```yaml
 repos:
