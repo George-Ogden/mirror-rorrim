@@ -8,7 +8,7 @@ import traceback
 from typing import Any, Never, cast
 
 import git
-from git import GitCommandError, GitError, InvalidGitRepositoryError, Tree
+from git import HEAD, GitCommandError, GitError, Head, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
 from git.cmd import _AutoInterrupt as GitCmd
 from loguru import logger
@@ -132,9 +132,13 @@ class GitHelper:
     @classmethod
     def _sync(cls, local: GitDir) -> None:
         with describe(f"Pulling {cls.repo(local).remote().url} into {local}", error_level="DEBUG"):
-            repo = cls.repo(local)
-            [fetch_info] = repo.remote().fetch()
-            repo.head.reset(fetch_info.commit, working_tree=True, index=True)
+            commit = cls._fetch(local)
+            cls.head(local).reset(commit.sha, working_tree=True, index=True)
+
+    @classmethod
+    def _fetch(cls, local: GitDir) -> Commit:
+        cls.repo(local).remote().fetch()
+        return Commit(strict_not_none(cls.branch(local).tracking_branch()).commit.hexsha)
 
     @classmethod
     def fresh_diff(cls, local: GitDir, file: RelFile) -> str:
@@ -168,8 +172,16 @@ class GitHelper:
         cls.run_command(local, "hash-object", "--stdin", "-w", stdin=blob)
 
     @classmethod
+    def head(cls, local: GitDir) -> HEAD:
+        return cls.repo(local).head
+
+    @classmethod
+    def branch(cls, local: GitDir) -> Head:
+        return cls.repo(local).active_branch
+
+    @classmethod
     def commit(cls, local: GitDir) -> str:
-        return cls.repo(local).head.commit.hexsha
+        return cls.head(local).commit.hexsha
 
     @classmethod
     def tree(cls, local: GitDir, commit: Commit | None = None) -> Tree:
