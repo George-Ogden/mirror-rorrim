@@ -14,3 +14,13 @@ jobs:
     with:
       python-versions: "['3.13']"
       pytest-flags: -vv -m "not local"
+
+  readme-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Check version in README
+        run: |
+          grep -Fq --  "rev: v$(cat version.txt)" README.md
