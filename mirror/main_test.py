@@ -93,6 +93,20 @@ def remove_git_data(local: GitDir) -> None:
             ),
             "installer_tests/existing_lock",
         ),
+        (
+            # overwrite local mirror file
+            "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
+            0,
+            snapshot("'.mirror.yaml' has been overwritten during installation."),
+            "installer_tests/remote_config_overwrite",
+        ),
+        (
+            # overwrite local mirror file with itself
+            "install",
+            0,
+            snapshot(""),
+            "installer_tests/remote_config_overwrite",
+        ),
         # check tests
         (
             # works fine
@@ -111,18 +125,11 @@ def remove_git_data(local: GitDir) -> None:
             remove_git_data,
         ),
         (
-            # overwrite local mirror file
-            "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
-            0,
-            snapshot("'.mirror.yaml' has been overwritten during installation."),
-            "installer_tests/remote_config_overwrite",
-        ),
-        (
-            # overwrite local mirror file with itself
-            "install",
-            0,
-            snapshot(""),
-            "installer_tests/remote_config_overwrite",
+            # behind with pre-commit
+            "check --pre-commit",
+            1,
+            snapshot("Mirror|rorriM config files are not up to date; run `mirror sync` to update."),
+            "checker_tests/behind",
         ),
         # sync tests
         (
