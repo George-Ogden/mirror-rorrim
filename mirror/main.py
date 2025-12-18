@@ -12,7 +12,7 @@ from git import InvalidGitRepositoryError
 from loguru import logger
 
 from .checker import MirrorChecker
-from .constants import MIRROR_FILE
+from .constants import MIRROR_FILE, MIRROR_NAME
 from .githelper import GitHelper
 from .installer import InstallSource, MirrorInstaller
 from .logger import ProgramState, setup_logger
@@ -106,9 +106,10 @@ def install(config_file: str, config_repo: str | None) -> None:
 
 
 @main.command()
+@click.option("--pre-commit", is_flag=True)
 @check_for_errors
 @ProgramState.record_command
-def check() -> ExitCode:
+def check(pre_commit: bool) -> ExitCode:
     """Check whether files from Mirror|rorriM are up to date with their remotes.
 
     \b
@@ -117,7 +118,11 @@ def check() -> ExitCode:
     mirror check
     """
     checker = MirrorChecker(target=GitDir.cwd())
-    return checker.check()
+    if (return_value := checker.check()) and pre_commit:
+        logger.critical(
+            f"{MIRROR_NAME} config files are not up to date; run `mirror sync` to update."
+        )
+    return return_value
 
 
 @main.command()

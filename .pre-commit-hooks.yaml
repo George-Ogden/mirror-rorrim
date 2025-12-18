@@ -1,0 +1,9 @@
+- id: mirror-check
+  name: mirror check
+  language: python
+  entry: mirror -q check
+  flags: [--pre-commit]
+  always_run: true
+  pass_filenames: false
+  require_serial: true
+  description: Mirror|rorriM
