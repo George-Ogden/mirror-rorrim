@@ -32,7 +32,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
             "behind",
             1,
             snapshot(
-                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 84b0856, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376."
+                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit f9e6738, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit dfbf6e9."
             ),
             marks=[pytest.mark.slow],
         ),
@@ -61,7 +61,7 @@ def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
             "invalid_commit",
             1,
             snapshot(
-                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 0000000, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit 446d376."
+                "Checking out all repos ...    Checking out all repos [done]    'config-only.yaml' has commit 0000000, but 'https://github.com/George-Ogden/remote-installer-test-data' has commit dfbf6e9."
             ),
         ),
         (
