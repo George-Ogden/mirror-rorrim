@@ -2,7 +2,7 @@
   name: mirror check
   language: python
   entry: mirror -q check
-  flags: [--pre-commit]
+  args: [--pre-commit]
   always_run: true
   pass_filenames: false
   require_serial: true
