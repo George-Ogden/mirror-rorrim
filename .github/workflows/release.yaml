@@ -14,3 +14,4 @@ jobs:
     uses: George-Ogden/actions/.github/workflows/python-release.yaml@v3.2.0
     with:
       validation-code:
+      validation-script: mirror sync
