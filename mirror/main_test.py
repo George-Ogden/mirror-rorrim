@@ -233,5 +233,9 @@ def test_pre_commit_with_mirror(
     )
     with open(local_git_repo / RelFile(".pre-commit-config.yaml"), "w") as f:
         f.write(pre_commit_contents)
+    GitHelper.run_command(
+        local_git_repo, "config", "user.email", "github-actions[bot]@users.noreply.github.com"
+    )
+    GitHelper.run_command(local_git_repo, "config", "user.name", "github-actions[bot]")
     commit_result = GitHelper.run_command(local_git_repo, "commit", "-am", "Setup mirror")
     assert commit_result.returncode == 0
