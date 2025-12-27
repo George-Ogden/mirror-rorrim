@@ -1,7 +1,6 @@
 -r requirements.txt
-git+https://github.com/George-Ogden/dbg
-git+https://github.com/George-Ogden/mypy-pytest.git
-git+https://github.com/George-Ogden/pytest-dbg
+git+https://github.com/George-Ogden/mypy-pytest; python_version >= "3.12"
+git+https://github.com/George-Ogden/pytest-dbg; python_version >= "3.11"
 inline-snapshot
 mypy
 pip

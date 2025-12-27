@@ -1,0 +1,8 @@
+default_stages: ["pre-commit"]
+default_install_hook_types: ["pre-commit"]
+
+repos:
+  - repo: CURRENT_REPO
+    rev: HEAD
+    hooks:
+      - id: mirror-check

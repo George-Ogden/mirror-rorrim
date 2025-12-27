@@ -8,9 +8,10 @@ from typing import Any, cast, overload
 import git
 from pytest import ExceptionInfo
 
-from .constants import MIRROR_LOCK
+from .constants import MIRROR_FILE, MIRROR_LOCK
 from .file import MirrorFile, VersionedMirrorFile
 from .githelper import GitHelper
+from .installer import MirrorInstaller
 from .mirror import Mirror
 from .repo import MirrorRepo
 from .state import MirrorRepoState, MirrorState
@@ -78,6 +79,16 @@ def quick_mirror_repo_state(source: str, commit: str, files: list[str]) -> Mirro
 
 def quick_mirror_state(mirror_repos: list[MirrorRepoState]) -> MirrorState:
     return MirrorState(mirror_repos)
+
+
+def quick_installer(
+    target: None | str | AbsDir, remote: tuple[str | None | Remote, str | RelFile | None] | None
+) -> MirrorInstaller:
+    source_remote, source_path = remote or (None, None)
+    source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
+    source_path = RelFile(source_path or MIRROR_FILE)
+    source = source_path if source_remote is None else (source_remote, source_path)
+    return MirrorInstaller(source=source, target=GitDir(target or AbsDir.cwd()))
 
 
 def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> Commit:

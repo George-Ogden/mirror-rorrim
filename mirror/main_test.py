@@ -1,15 +1,20 @@
 from collections.abc import Callable
+import os
+from pathlib import Path
 import shlex
 import shutil
+import subprocess
+import sys
 
 from inline_snapshot import snapshot
 import pytest
 from pytest import CaptureFixture
 
 from .constants import MIRROR_LOCK, MIRROR_NAME
+from .githelper import GitHelper
 from .main import main
-from .test_utils import add_commit, normalize_message
-from .typed_path import AbsDir, GitDir, RelDir
+from .test_utils import add_commit, normalize_message, quick_installer
+from .typed_path import AbsDir, GitDir, RelDir, RelFile
 
 
 @pytest.fixture
@@ -202,3 +207,35 @@ def test_main(
         assert (local_git_repo / MIRROR_LOCK).exists() == mirror_existed_before
     out, _err = capsys.readouterr()
     assert normalize_message(out, git_dir=local_git_repo) == logs
+
+
+@pytest.mark.slow
+def test_pre_commit_with_mirror(
+    local_git_repo: GitDir, test_data_path: AbsDir, capfd: CaptureFixture
+) -> None:
+    with open(
+        test_data_path / RelDir("pre_commit_tests") / RelFile(".pre-commit-config.yaml")
+    ) as f:
+        pre_commit_contents = f.read()
+    pre_commit_contents = pre_commit_contents.replace(
+        "CURRENT_REPO", os.fspath(Path(__file__).parent.parent.absolute())
+    )
+    add_commit(local_git_repo, {".pre-commit-config.yaml": pre_commit_contents})
+    quick_installer(
+        local_git_repo, ("https://github.com/George-Ogden/mirror-config", "python.mirror.yaml")
+    ).install()
+    subprocess.run(
+        ["pre-commit", "install"],
+        cwd=local_git_repo,
+        check=True,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+    )
+    with open(local_git_repo / RelFile(".pre-commit-config.yaml"), "w") as f:
+        f.write(pre_commit_contents)
+    GitHelper.run_command(
+        local_git_repo, "config", "user.email", "github-actions[bot]@users.noreply.github.com"
+    )
+    GitHelper.run_command(local_git_repo, "config", "user.name", "github-actions[bot]")
+    commit_result = GitHelper.run_command(local_git_repo, "commit", "-am", "Setup mirror")
+    assert commit_result.returncode == 0

@@ -1,29 +1,17 @@
-import os
 from unittest import mock
 
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
 from .constants import MIRROR_FILE
-from .installer import MirrorInstaller
 from .repo import MirrorRepo
-from .test_utils import quick_mirror_repo, setup_repo, snapshot_of_repo
-from .typed_path import AbsDir, GitDir, RelDir, RelFile, Remote
+from .test_utils import quick_installer, quick_mirror_repo, setup_repo, snapshot_of_repo
+from .typed_path import AbsDir, GitDir, RelDir, RelFile
 
 
 @pytest.fixture
 def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("installer_tests")
-
-
-def quick_installer(
-    target: None | str | AbsDir, remote: tuple[str | None | Remote, str | RelFile | None] | None
-) -> MirrorInstaller:
-    source_remote, source_path = remote or (None, None)
-    source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
-    source_path = RelFile(source_path or MIRROR_FILE)
-    source = source_path if source_remote is None else (source_remote, source_path)
-    return MirrorInstaller(source=source, target=GitDir(target or AbsDir.cwd()))
 
 
 @pytest.mark.parametrize(
