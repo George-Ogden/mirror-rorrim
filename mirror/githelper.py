@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import functools
 import os
@@ -46,10 +46,7 @@ class GitHelper:
     def run_command(
         cls, local: GitDir, command: str, *args: str | PathLike, stdin: str | bytes | None = None
     ) -> ProcessResult:
-        env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
-        kwargs: dict[str, Any] = {}
-        if stdin is not None:
-            kwargs["stdin"] = PIPE
+        env = cls._filter_environment()
         process = Popen(
             ["git", command, *args],
             cwd=local,
@@ -57,10 +54,15 @@ class GitHelper:
             stdout=PIPE,
             stderr=PIPE,
             text=False,
-            **kwargs,
+            stdin=None if stdin is None else PIPE,
         )
         cls.pipe_stdin(process, stdin)
         return cls.wait(process)
+
+    @classmethod
+    @functools.cache
+    def _filter_environment(cls) -> Mapping[str, Any]:
+        return {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
 
     @classmethod
     def pipe_stdin(cls, process: Popen[bytes], stdin: str | bytes | None) -> None:
