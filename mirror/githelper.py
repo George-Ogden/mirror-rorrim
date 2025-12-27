@@ -2,15 +2,15 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 import functools
 import os
+from os import PathLike
 import shutil
 from subprocess import PIPE, Popen
 import traceback
-from typing import Any, Never, cast
+from typing import Any, cast
 
 import git
 from git import HEAD, GitCommandError, GitError, Head, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
-from git.cmd import _AutoInterrupt as GitCmd
 from loguru import logger
 
 from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
@@ -44,39 +44,39 @@ class GitHelper:
 
     @classmethod
     def run_command(
-        cls,
-        local: GitDir,
-        command: str,
-        *args: Any,
-        stdin: str | bytes | None = None,
-        as_process: Never = cast(Never, None),
-        istream: Never = cast(Never, None),
-        **kwargs: Any,
+        cls, local: GitDir, command: str, *args: str | PathLike, stdin: str | bytes | None = None
     ) -> ProcessResult:
+        env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+        kwargs: dict[str, Any] = {}
         if stdin is not None:
-            kwargs["istream"] = PIPE
-        cmd: GitCmd = getattr(cls.repo(local).git, command)(*args, **kwargs, as_process=True)
-        cls.pipe_stdin(cmd, stdin)
-        return cls.wait(cmd)
+            kwargs["stdin"] = PIPE
+        process = Popen(
+            ["git", command, *args],
+            cwd=local,
+            env=env,
+            stdout=PIPE,
+            stderr=PIPE,
+            text=False,
+            **kwargs,
+        )
+        cls.pipe_stdin(process, stdin)
+        return cls.wait(process)
 
     @classmethod
-    def pipe_stdin(cls, cmd: GitCmd, stdin: str | bytes | None) -> None:
+    def pipe_stdin(cls, process: Popen[bytes], stdin: str | bytes | None) -> None:
         if stdin is not None:
-            cls._pipe_stdin(cmd, stdin)
+            cls._pipe_stdin(process, stdin)
 
     @classmethod
-    def _pipe_stdin(cls, cmd: GitCmd, stdin: str | bytes) -> None:
-        assert cmd.proc is not None
-        assert cmd.proc.stdin is not None
+    def _pipe_stdin(cls, process: Popen[bytes], stdin: str | bytes) -> None:
+        assert process.stdin is not None
         if isinstance(stdin, str):
             stdin = stdin.encode("utf-8")
-        cmd.proc.stdin.write(stdin)
-        cmd.proc.stdin.close()
+        process.stdin.write(stdin)
+        process.stdin.close()
 
     @classmethod
-    def wait(cls, process: Popen | GitCmd) -> ProcessResult:
-        if isinstance(process, GitCmd):
-            process = strict_not_none(process.proc)
+    def wait(cls, process: Popen) -> ProcessResult:
         process.wait()
         result = ProcessResult(
             stdout=strict_not_none(git.safe_decode(strict_not_none(process.stdout).read())),
@@ -133,7 +133,7 @@ class GitHelper:
     def _sync(cls, local: GitDir) -> None:
         with describe(f"Pulling {cls.repo(local).remote().url} into {local}", error_level="DEBUG"):
             commit = cls._fetch(local)
-            cls.head(local).reset(commit.sha, working_tree=True, index=True)
+            cls.run_command(local, "reset", "--hard", commit.sha)
 
     @classmethod
     def _fetch(cls, local: GitDir) -> Commit:
