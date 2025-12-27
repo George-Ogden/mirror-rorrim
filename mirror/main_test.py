@@ -209,6 +209,7 @@ def test_main(
     assert normalize_message(out, git_dir=local_git_repo) == logs
 
 
+@pytest.mark.slow
 def test_pre_commit_with_mirror(
     local_git_repo: GitDir, test_data_path: AbsDir, capfd: CaptureFixture
 ) -> None:
