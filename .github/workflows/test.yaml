@@ -20,7 +20,3 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-
-      - name: Check version in README
-        run: |
-          grep -Fq --  "rev: v$(cat version.txt)" README.md

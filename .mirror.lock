@@ -3,6 +3,7 @@
   files:
   - .github/python-release.yaml
   - .github/python-test.yaml
+  - .github/readme-check.yaml
   - .github/workflows/lint.yaml
   - LICENSE
   - mypy.ini

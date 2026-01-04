@@ -4,6 +4,7 @@ repos:
       - .mirror.yaml: python.mirror.yaml
       - .github/workflows/release.yaml: .github/python-release.yaml
       - .github/workflows/test.yaml: .github/python-test.yaml
+      - .github/workflows/readme-check.yaml: .github/readme-check.yaml
       - .github/workflows/lint.yaml
       - .gitignore: python.gitignore
       - .pre-commit-config.yaml: python.pre-commit-config.yaml
