@@ -39,8 +39,7 @@ class GitHelper:
     @classmethod
     @functools.cache
     def repo(cls, local: GitDir) -> GitRepo:
-        # Convert to string explicitly to gitpython-developers/GitPython#2085
-        return GitRepo(os.fspath(local))
+        return GitRepo(local)
 
     @classmethod
     def run_command(
@@ -156,8 +155,7 @@ class GitHelper:
 
     @classmethod
     def file_blob(cls, local: GitDir, commit: Commit, file: RelFile) -> bytes:
-        # gitpython-developers/GitPython#2094
-        blob = cls.tree(local, commit) / os.fspath(file)
+        blob = cls.tree(local, commit) / file
         return blob.data_stream.read()
 
     @classmethod

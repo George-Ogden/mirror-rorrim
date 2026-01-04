@@ -92,8 +92,7 @@ def quick_installer(
 
 
 def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> Commit:
-    # gitpython-developers/GitPython#2085
-    repo = git.Repo.init(os.fspath(path))
+    repo = git.Repo.init(path)
     path = GitDir(path)
 
     if files is not None:

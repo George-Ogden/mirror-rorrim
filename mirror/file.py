@@ -20,9 +20,8 @@ class MirrorFile:
         return cls(source=config.source, target=config.target)
 
     def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
-        # gitpython-developers/GitPython#2094
         with contextlib.suppress(KeyError):
-            return GitHelper.tree(folder) / str(self.source.path)
+            return GitHelper.tree(folder) / self.source
         return None
 
     def exists_in(self, folder: GitDir) -> bool:
@@ -45,9 +44,8 @@ class VersionedMirrorFile:
         return cls(MirrorFile.from_config(config), commit)
 
     def _git_object(self, folder: GitDir) -> Blob | Tree | Submodule | None:
-        # gitpython-developers/GitPython#2094
         with contextlib.suppress(KeyError):
-            return GitHelper.tree(folder, self.commit) / str(self.source.path)
+            return GitHelper.tree(folder, self.commit) / self.source
         return None
 
     @property
