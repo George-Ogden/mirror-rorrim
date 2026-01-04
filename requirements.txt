@@ -1,5 +1,5 @@
 click
-gitpython
+GitPython>=3.1.46
 loguru
 platformdirs
 pyyaml
