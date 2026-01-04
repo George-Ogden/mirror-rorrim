@@ -1,5 +1,4 @@
 from collections.abc import Callable, Generator, Sequence
-import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -140,8 +139,7 @@ def test_update_all(
         existing_file = test_data_path / RelDir("local") / file.target
         if existing_file.exists():
             shutil.copy2(existing_file, local_git_repo)
-    # gitpython-developers/GitPython#2085
-    git.Repo.init(os.fspath(repo.cache))
+    git.Repo.init(repo.cache)
     shutil.copytree(test_data_path / RelDir("remote"), repo.cache, dirs_exist_ok=True)
     repo.update(local_git_repo)
 
