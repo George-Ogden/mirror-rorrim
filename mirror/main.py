@@ -69,7 +69,7 @@ def check_git_repo() -> None:
 
 @main.command()
 @click.option("--config-file", "--config", "-c", default=os.fspath(MIRROR_FILE))
-@click.option("--config-repo", default=None)
+@click.option("--config-repo", "-C", default=None)
 @check_for_errors
 @ProgramState.record_command
 def install(config_file: str, config_repo: str | None) -> None:

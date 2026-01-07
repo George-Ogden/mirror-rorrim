@@ -6,7 +6,7 @@ ci:
 
 repos:
   - repo: https://github.com/George-Ogden/mirror-rorrim/
-    rev: v0.4.2
+    rev: v0.4.3
     hooks:
       - id: mirror-check
         fail_fast: true
