@@ -5,6 +5,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from unittest import mock
 
 from inline_snapshot import snapshot
 import pytest
@@ -27,7 +28,7 @@ def remove_git_data(local: GitDir) -> None:
 
 
 @pytest.mark.parametrize(
-    "args, exitcode ,logs, setup_repo",
+    "args, exitcode, logs, setup_repo",
     [
         # install tests
         (
@@ -205,6 +206,42 @@ def test_main(
     else:
         assert e.value.code != 0
         assert (local_git_repo / MIRROR_LOCK).exists() == mirror_existed_before
+    out, _err = capsys.readouterr()
+    assert normalize_message(out, git_dir=local_git_repo) == logs
+
+
+@pytest.mark.parametrize(
+    "args, logs, setup_repo",
+    [
+        (
+            # update mirror file
+            "sync",
+            snapshot(
+                "Syncing 'https://github.com/George-Ogden/remote-installer-test-data' [failed]    Checking out all repos [failed]    Syncing all repos [failed]    KeyboardInterrupt"
+            ),
+            "syncer_tests/update_mirror",
+        )
+    ],
+)
+def test_main_with_keyboard_interrupt(
+    args: str,
+    logs: str,
+    setup_repo: str | RelDir | None,
+    local_git_repo: GitDir,
+    test_data_path: AbsDir,
+    capsys: CaptureFixture,
+) -> None:
+    if setup_repo:
+        add_commit(local_git_repo, test_data_path / RelDir(setup_repo))
+    argv = ["-q", *shlex.split(args)]
+    mirror_existed_before = (local_git_repo / MIRROR_LOCK).exists()
+    with (
+        pytest.raises(SystemExit) as e,
+        mock.patch.object(GitHelper, "wait", mock.Mock(side_effect=[KeyboardInterrupt])),  # type: ignore [arg-type]
+    ):
+        main.main(argv, prog_name=MIRROR_NAME)
+    assert e.value.code != 0
+    assert (local_git_repo / MIRROR_LOCK).exists() == mirror_existed_before
     out, _err = capsys.readouterr()
     assert normalize_message(out, git_dir=local_git_repo) == logs
 
