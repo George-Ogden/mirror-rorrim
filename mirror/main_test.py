@@ -216,9 +216,7 @@ def test_main(
         (
             # update mirror file
             "sync",
-            snapshot(
-                "Syncing 'https://github.com/George-Ogden/remote-installer-test-data' [failed]    Checking out all repos [failed]    Syncing all repos [failed]    KeyboardInterrupt"
-            ),
+            snapshot("Updating all files [failed]    KeyboardInterrupt"),
             "syncer_tests/update_mirror",
         )
     ],
