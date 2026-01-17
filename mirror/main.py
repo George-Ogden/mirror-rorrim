@@ -29,7 +29,8 @@ def check_for_errors[**P](fn: Callable[P, ExitCode | None]) -> Callable[P, None]
         except BaseException as e:
             logger.debug(f"Threw {type(e)}!")
             logger.trace(traceback.format_exc())
-            logger.error(f"{type(e).__name__}: {e}")
+            message = str(e).strip()
+            logger.error(f"{type(e).__name__}{f': {message}' if message else ''}")
             sys.exit(1)
         if exitcode is not None:
             sys.exit(exitcode)

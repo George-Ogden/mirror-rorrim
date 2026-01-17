@@ -6,7 +6,7 @@ ci:
 
 repos:
   - repo: https://github.com/George-Ogden/mirror-rorrim/
-    rev: v0.4.3
+    rev: v0.4.4
     hooks:
       - id: mirror-check
         fail_fast: true
@@ -33,7 +33,7 @@ repos:
         args: ["--severity=warning"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit/
-    rev: v0.14.10
+    rev: v0.14.13
     hooks:
       - id: ruff-check
         args:
