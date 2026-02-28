@@ -10,17 +10,18 @@
   
     ''',
     '_debug_init.py': '''
+      from .builtins import install, uninstall
       from .config import CONFIG
       from .debug import dbg
       from .format import pformat, pprint
       
-      __all__ = ["CONFIG", "dbg", "pformat", "pprint"]
+      __all__ = ["CONFIG", "dbg", "install", "pformat", "pprint", "uninstall"]
   
     ''',
     'debug_init.py': '''
-      from _debug import CONFIG, dbg, pformat, pprint
+      from _debug import CONFIG, dbg, install, pformat, pprint, uninstall
       
-      __all__ = ["CONFIG", "dbg", "pformat", "pprint"]
+      __all__ = ["CONFIG", "dbg", "install", "pformat", "pprint", "uninstall"]
   
     ''',
   })
