@@ -235,7 +235,7 @@ def test_main_with_keyboard_interrupt(
     mirror_existed_before = (local_git_repo / MIRROR_LOCK).exists()
     with (
         pytest.raises(SystemExit) as e,
-        mock.patch.object(GitHelper, "wait", mock.Mock(side_effect=[KeyboardInterrupt])),  # type: ignore [arg-type]
+        mock.patch.object(GitHelper, "wait", mock.Mock(side_effect=[KeyboardInterrupt])),  # type: ignore [list-item]
     ):
         main.main(argv, prog_name=MIRROR_NAME)
     assert e.value.code != 0

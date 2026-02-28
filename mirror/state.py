@@ -171,7 +171,7 @@ class MirrorState(AutoState):
         AutoState.dump(self, f)
 
     @property
-    def index(self) -> Mapping[str, None | MirrorRepoState]:
+    def index(self) -> Mapping[str, MirrorRepoState | None]:
         return defaultdict(
             lambda: None, {sub_state.source.canonical: sub_state for sub_state in self}
         )

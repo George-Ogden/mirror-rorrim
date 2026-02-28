@@ -11,7 +11,7 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("syncer_tests")
 
 
-def quick_syncer(target: None | str | AbsDir) -> MirrorSyncer:
+def quick_syncer(target: str | AbsDir | None) -> MirrorSyncer:
     return MirrorSyncer(GitDir(target or AbsDir.cwd()))
 
 

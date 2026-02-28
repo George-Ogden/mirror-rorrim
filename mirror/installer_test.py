@@ -56,7 +56,7 @@ def test_installer_source_repo(
 )
 def test_installer_install(
     test_name: str,
-    source: tuple[None | str, str] | None,
+    source: tuple[str | None, str] | None,
     local_git_repo: GitDir,
     test_data_path: AbsDir,
     snapshot: SnapshotAssertion,
