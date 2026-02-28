@@ -28,6 +28,7 @@ Now you make the following changes:
 <table>
 <tr><th>Mirror Source</th><th>Working Repo</th></tr>
 <tr><td>
+
 ```ini
 [pytest]
 version = 9.1
@@ -35,7 +36,9 @@ markers =
     slow: affects the runtime of the test suite
     local: skip on the remote test server
 ```
+
 </td><td>
+
 ```ini
 [pytest]
 version = 9.0
@@ -43,12 +46,16 @@ markers =
     custom: only used in this repo
     slow: affects the runtime of the test suite
 ```
+
 </td></tr>
 </table>
+
 When you run `mirror sync`, the changes (as a diff) are applied to your working version:
+
 <table>
 <tr><th>Remote Diff</th><th>Updated Working Repo</th></tr>
 <tr><td>
+
 ```diff
  [pytest]
 -version = 9.0
@@ -58,7 +65,9 @@ When you run `mirror sync`, the changes (as a diff) are applied to your working 
      slow: affects the runtime of the test suite
 +    local: skip on the remote test server
 ```
+
 </td><td>
+
 ```ini
 [pytest]
 version = 9.1
@@ -67,6 +76,7 @@ markers =
     slow: affects the runtime of the test suite
     local: skip on the remote test server
 ```
+
 </td></tr>
 </table>
 
