@@ -6,13 +6,14 @@ indent-style = "space"
 skip-magic-trailing-comma = true
 
 [lint]
-extend-select = ["B", "E", "ERA", "F", "I", "N", "PT", "PYI", "RET", "RUF", "SIM", "UP", "W"]
-extend-ignore = ["E501", "F811", "PT011", "PT012", "PT013", "PYI041", "RET504", "SIM118"]
-extend-unfixable = ["B905"]
+extend-select = ["B", "C4", "COM818", "ERA", "F", "I", "ISC", "N", "PT", "PYI", "RET", "RUF", "SIM", "UP", "W"]
+extend-ignore = ["C408", "E501", "F811", "PLC0414", "PT011", "PT012", "PT013", "PYI041", "RET504", "S", "SIM118", "TRY"]
+extend-unfixable = ["B905", "B911", "B912"]
+preview = true
 
 [lint.isort]
 force-sort-within-sections = true
-split-on-trailing-comma=false
+split-on-trailing-comma = false
 
 [lint.flake8-pytest-style]
 parametrize-names-type = "csv"
