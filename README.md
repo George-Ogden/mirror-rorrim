@@ -80,6 +80,8 @@ markers =
 </td></tr>
 </table>
 
+**All changes are kept!** (You'll see a merge conflict if not.)
+
 ## Usage
 
 Just follow these three steps:
