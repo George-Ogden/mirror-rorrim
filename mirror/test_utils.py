@@ -35,7 +35,7 @@ def quick_versioned_mirror_file(source: str | RelFile, commit: Commit) -> Versio
 
 def quick_versioned_mirror_file(  # type: ignore [misc]
     source: str | RelFile,
-    target: RelFile | str | None | Commit = None,
+    target: RelFile | str | Commit | None = None,
     commit: Commit | str | None = None,
 ) -> VersionedMirrorFile:
     if isinstance(target, Commit):
@@ -82,7 +82,7 @@ def quick_mirror_state(mirror_repos: list[MirrorRepoState]) -> MirrorState:
 
 
 def quick_installer(
-    target: None | str | AbsDir, remote: tuple[str | None | Remote, str | RelFile | None] | None
+    target: str | AbsDir | None, remote: tuple[str | Remote | None, str | RelFile | None] | None
 ) -> MirrorInstaller:
     source_remote, source_path = remote or (None, None)
     source_remote = None if source_remote is None else Remote(os.fspath(source_remote))
@@ -91,7 +91,7 @@ def quick_installer(
     return MirrorInstaller(source=source, target=GitDir(target or AbsDir.cwd()))
 
 
-def add_commit(path: AbsDir | str, files: dict[str, Any] | None | AbsDir = None) -> Commit:
+def add_commit(path: AbsDir | str, files: dict[str, Any] | AbsDir | None = None) -> Commit:
     repo = git.Repo.init(path)
     path = GitDir(path)
 
@@ -135,7 +135,7 @@ def normalize_message(
         error_msg = error_msg.replace(os.fspath(test_data_path), "TEST_DATA")
     if git_dir is not None:
         git_dirs = [git_dir] if isinstance(git_dir, AbsDir) else git_dir
-        for git_dir in git_dirs:
+        for git_dir in git_dirs:  # noqa: PLR1704
             error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
             with contextlib.suppress(ValueError):
                 for commit in GitHelper.repo(git_dir).iter_commits():

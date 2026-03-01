@@ -26,7 +26,7 @@ class Diff:
         return cls.from_commit(file.commit, repo, file.file)
 
     @classmethod
-    def from_commit(cls, commit: None | Commit, repo: GitDir, file: MirrorFile) -> Self:
+    def from_commit(cls, commit: Commit | None, repo: GitDir, file: MirrorFile) -> Self:
         if commit is None:
             return cls.empty(repo, file)
         return cls._from_commit(commit, repo, file)
@@ -48,7 +48,7 @@ class Diff:
             return patch
         _header, *patch_lines = patch.splitlines(keepends=True)
         cls.update_patch_lines(patch_lines, file, new=new)
-        return "".join(patch_lines)
+        return str.join("", patch_lines)
 
     @classmethod
     def update_patch_lines(cls, patch_lines: list[str], file: MirrorFile, *, new: bool) -> None:

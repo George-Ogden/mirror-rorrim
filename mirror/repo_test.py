@@ -83,7 +83,7 @@ def checkout_not_a_git_repo_test_case() -> tuple[
 def test_checkout(
     mocked_cache_dir: AbsDir,
     setup_repo: Callable[[], MirrorRepo],
-    error: None | tuple[type[Exception], str],
+    error: tuple[type[Exception], str] | None,
 ) -> None:
     # Use callable to get access to the mocked cache dir.
     repo = setup_repo()
@@ -241,7 +241,7 @@ def all_but_missing_up_to_date_test_case(git_dir: GitDir) -> MirrorRepo:
 )
 def test_all_up_to_date(
     setup: Callable[[GitDir], MirrorRepo],
-    expected_message: None | str,
+    expected_message: str | None,
     local_git_repo: GitDir,
     caplog: LogCaptureFixture,
     log_cleanly: None,

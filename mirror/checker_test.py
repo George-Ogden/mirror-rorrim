@@ -13,7 +13,7 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
     return global_test_data_path / RelDir("checker_tests")
 
 
-def quick_checker(target: None | str | AbsDir) -> MirrorChecker:
+def quick_checker(target: str | AbsDir | None) -> MirrorChecker:
     return MirrorChecker(GitDir(target or AbsDir.cwd()))
 
 

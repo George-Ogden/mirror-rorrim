@@ -40,7 +40,7 @@ class Mirror:
         return int(not up_to_date)
 
     def all_up_to_date(self) -> bool:
-        return all([repo.all_up_to_date() for repo in self.repos])
+        return all([repo.all_up_to_date() for repo in self.repos])  # noqa: C419
 
     @describe("Checking out all repos", level="INFO")
     def checkout_all(self) -> None:

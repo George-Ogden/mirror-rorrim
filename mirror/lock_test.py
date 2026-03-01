@@ -281,4 +281,4 @@ def test_file_system_semaphore_multiple_processes(
         follower.join(2.0)
 
     result = dict(queue.get_nowait() for _ in range(num_followers))
-    assert result == {idx: "data" for idx in range(num_followers)}
+    assert result == dict.fromkeys(range(num_followers), "data")

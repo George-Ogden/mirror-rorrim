@@ -84,7 +84,7 @@ class MirrorRepo:
                 raise IrregularFileError(self.source, file.source)
 
     def all_up_to_date(self) -> bool:
-        return all([self.up_to_date(file) for file in self.files])
+        return all([self.up_to_date(file) for file in self.files])  # noqa: C419
 
     def up_to_date(self, file: VersionedMirrorFile) -> bool:
         up_to_date = self.commit == file.commit

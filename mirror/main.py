@@ -26,7 +26,7 @@ def check_for_errors[**P](fn: Callable[P, ExitCode | None]) -> Callable[P, None]
     def main(*args: P.args, **kwargs: P.kwargs) -> None:
         try:
             exitcode = fn(*args, **kwargs)
-        except BaseException as e:
+        except BaseException as e:  # noqa: BLE001
             logger.debug(f"Threw {type(e)}!")
             logger.trace(traceback.format_exc())
             message = str(e).strip()
@@ -83,7 +83,7 @@ def install(config_file: str, config_repo: str | None) -> None:
 
     \b
     # Install using the config from the remote repo.
-    mirror install ./mirror/ --config-repo https://myrepos.com/mirror
+    mirror install --config-repo https://myrepos.com/mirror
 
     \b
     # Install using the Python config from the remote repo.
