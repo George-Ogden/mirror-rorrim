@@ -8,7 +8,7 @@ ci:
 
 repos:
   - repo: https://github.com/George-Ogden/mirror-rorrim/
-    rev: v0.4.5
+    rev: v0.4.6
     hooks:
       - id: mirror-check
         fail_fast: true
@@ -21,7 +21,6 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
-        exclude: test_data/.*/snapshots/
       - id: requirements-txt-fixer
 
   - repo: https://github.com/George-Ogden/linter/
@@ -64,6 +63,7 @@ repos:
     rev: v2.4.0
     hooks:
       - id: check-merge-conflict
+        exclude: test_data/.*/snapshots/
       - id: dbg-check
         exclude: test_data/.*/snapshots/
       - id: todo-check

@@ -7,9 +7,9 @@ from unittest import mock
 import git
 from git import GitError
 from inline_snapshot import snapshot
+from inline_snapshot._external._external_file import ExternalFile
 import pytest
 from pytest import LogCaptureFixture
-from syrupy.assertion import SnapshotAssertion
 
 from .config import MirrorRepoConfig
 from .config_parser_test import quick_mirror_repo_config
@@ -133,7 +133,7 @@ def repo_renaming_test_case() -> MirrorRepo:
     ],
 )
 def test_update_all(
-    repo: MirrorRepo, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: GitDir
+    repo: MirrorRepo, test_data_path: AbsDir, json_snapshot: ExternalFile, local_git_repo: GitDir
 ) -> None:
     for file in repo.files:
         existing_file = test_data_path / RelDir("local") / file.target
@@ -149,7 +149,7 @@ def test_update_all(
             with open(local_git_repo / RelFile(filename)) as f:
                 repo_contents[filename] = f.read()
         break
-    assert repo_contents == snapshot
+    assert repo_contents == json_snapshot
 
 
 def quick_repo_state(source: str, commit: str, files: Sequence[str]) -> MirrorRepoState:

@@ -1,0 +1,3 @@
+{
+  ".mirror.yaml": "repos:\n  - source: .\n    files:\n      - .mirror.yaml\n"
+}

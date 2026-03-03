@@ -1,6 +1,6 @@
 from inline_snapshot import snapshot
+from inline_snapshot._external._external_file import ExternalFile
 import pytest
-from syrupy.assertion import SnapshotAssertion
 
 from .checker import MirrorChecker
 from .main import check_for_errors
@@ -86,7 +86,7 @@ def test_checker_check(
     expected_log: str,
     local_git_repo: GitDir,
     test_data_path: AbsDir,
-    snapshot: SnapshotAssertion,
+    json_snapshot: ExternalFile,
     caplog: pytest.LogCaptureFixture,
     log_cleanly: None,
 ) -> None:
@@ -97,4 +97,4 @@ def test_checker_check(
         check_for_errors(checker.check)()
     assert e.value.code == exitcode
     assert normalize_message(caplog.text, git_dir=local_git_repo) == expected_log
-    assert snapshot_of_repo(local_git_repo, include_lockfile=True) == snapshot
+    assert snapshot_of_repo(local_git_repo, include_lockfile=True) == json_snapshot

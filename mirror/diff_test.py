@@ -4,8 +4,9 @@ import stat
 import tempfile
 import textwrap
 
+import _pytest.fixtures
+from inline_snapshot._external._external_file import ExternalFile
 import pytest
-from syrupy.assertion import SnapshotAssertion
 
 from .diff import Diff
 from .file import MirrorFile
@@ -19,8 +20,14 @@ def test_data_path(global_test_data_path: AbsDir) -> AbsDir:
 
 
 @pytest.fixture
-def test_name(file: MirrorFile) -> str:
-    return os.fspath(file.target)
+def test_name(file: MirrorFile, request: _pytest.fixtures.FixtureRequest) -> str:
+    while not isinstance(request, _pytest.fixtures.TopRequest):
+        assert isinstance(request, _pytest.fixtures.SubRequest)
+        request = request._parent_request
+    func_name: str = request.node.function.__name__
+    assert func_name.startswith("test_diff_")
+    name = func_name.replace("test_diff_", "", count=1)
+    return os.fspath(RelDir(name) / file.target)
 
 
 @pytest.mark.parametrize(
@@ -35,7 +42,7 @@ def test_name(file: MirrorFile) -> str:
     ],
 )
 def test_diff_apply_new_file(
-    file: MirrorFile, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: GitDir
+    file: MirrorFile, test_data_path: AbsDir, text_snapshot: ExternalFile, local_git_repo: GitDir
 ) -> None:
     remote = AbsDir(tempfile.mkdtemp())
     add_commit(remote, test_data_path / RelDir("remote"))
@@ -47,7 +54,7 @@ def test_diff_apply_new_file(
         shutil.copy2(current_path, tmp_filepath)
     diff.apply(local_git_repo)
     with open(tmp_filepath) as f:
-        assert f.read() == snapshot
+        assert f.read() == text_snapshot
 
 
 @pytest.mark.typed
@@ -144,7 +151,7 @@ def test_diff_from_commit_empty(local_git_repo: GitDir) -> None:
     ],
 )
 def test_diff_apply_versioned_file(
-    file: MirrorFile, test_data_path: AbsDir, snapshot: SnapshotAssertion, local_git_repo: GitDir
+    file: MirrorFile, test_data_path: AbsDir, text_snapshot: ExternalFile, local_git_repo: GitDir
 ) -> None:
     test_data_path /= RelDir("merge")
     remote_path = GitDir(tempfile.mkdtemp(), check=False)
@@ -164,4 +171,4 @@ def test_diff_apply_versioned_file(
         shutil.copy2(test_data_path / file.target, local_git_repo / file.target)
     diff.apply(local_git_repo)
     with open(local_git_repo / file.target) as f:
-        assert f.read() == snapshot
+        assert f.read() == text_snapshot

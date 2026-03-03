@@ -1,5 +1,5 @@
+from inline_snapshot._external._external_file import ExternalFile
 import pytest
-from syrupy.assertion import SnapshotAssertion
 
 from .syncer import MirrorSyncer
 from .test_utils import setup_repo, snapshot_of_repo
@@ -26,9 +26,9 @@ def quick_syncer(target: str | AbsDir | None) -> MirrorSyncer:
     ],
 )
 def test_installer_install(
-    test_name: str, local_git_repo: GitDir, test_data_path: AbsDir, snapshot: SnapshotAssertion
+    test_name: str, local_git_repo: GitDir, test_data_path: AbsDir, json_snapshot: ExternalFile
 ) -> None:
     syncer = quick_syncer(local_git_repo)
     setup_repo(local_git_repo, test_data_path / RelDir(test_name))
     syncer.sync()
-    assert snapshot_of_repo(local_git_repo, include_lockfile=True) == snapshot
+    assert snapshot_of_repo(local_git_repo, include_lockfile=True) == json_snapshot

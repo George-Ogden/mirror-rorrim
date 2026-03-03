@@ -1,0 +1,7 @@
+{
+  "empty": "this file\nhas\nmultiple lines\n\n\nand a few blanks\n",
+  "empty-new": "",
+  "exists": "<<<<<<< ours\nand has some data in it\n=======\nit looks okay\nand then\nthis:\n  ____   ____   ____  __  __\n |  _ \\ / __ \\ / __ \\|  \\/  |\n | |_) | |  | | |  | | \\  / |\n |  _ <| |  | | |  | | |\\/| |\n | |_) | |__| | |__| | |  | |\n |____/ \\____/ \\____/|_|  |_|\n\ncreates a conflict\nthat needs resolving\nto make it okay\nand to test\nit happened correctly\n>>>>>>> theirs\n",
+  "new": "this file\nhas\nmultiple lines\n\n\nand a few blanks\n",
+  "identical": "identical\n"
+}

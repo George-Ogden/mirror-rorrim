@@ -1,0 +1,4 @@
+{
+  ".mirror.yaml": "repos:\n  - source: https://github.com/George-Ogden/remote-installer-test-data\n    files:\n      - .mirror.yaml: config-only.yaml\n",
+  ".mirror.lock": "# DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.\n- commit: f9e673848560466e871392894e6c657c7d690e8a\n  files:\n  - config-only.yaml\n  source: https://github.com/George-Ogden/remote-installer-test-data\n"
+}

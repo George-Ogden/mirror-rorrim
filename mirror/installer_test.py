@@ -1,7 +1,7 @@
 from unittest import mock
 
+from inline_snapshot._external._external_file import ExternalFile
 import pytest
-from syrupy.assertion import SnapshotAssertion
 
 from .constants import MIRROR_FILE
 from .repo import MirrorRepo
@@ -59,7 +59,7 @@ def test_installer_install(
     source: tuple[str | None, str] | None,
     local_git_repo: GitDir,
     test_data_path: AbsDir,
-    snapshot: SnapshotAssertion,
+    json_snapshot: ExternalFile,
 ) -> None:
     installer = quick_installer(local_git_repo, source)
     setup_repo(local_git_repo, test_data_path / RelDir(test_name))
@@ -67,4 +67,4 @@ def test_installer_install(
     if isinstance(installer.source, RelFile):
         object.__setattr__(installer, "source", local_git_repo / installer.source)
     installer.install()
-    assert snapshot_of_repo(local_git_repo, include_lockfile=False) == snapshot
+    assert snapshot_of_repo(local_git_repo, include_lockfile=False) == json_snapshot
