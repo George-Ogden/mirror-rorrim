@@ -27,6 +27,7 @@ class MirrorInstaller(MirrorManager):
 
     def install(self) -> None:
         self._run(self._install, keep_lock_on_failure=False)
+        logger.success("Install complete!")
 
     def _install(self) -> None:
         self.checkout_all()
