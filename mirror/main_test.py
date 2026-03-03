@@ -144,7 +144,7 @@ def remove_git_data(local: GitDir) -> None:
             # works fine
             "sync",
             0,
-            snapshot(""),
+            snapshot("All synced!"),
             "syncer_tests/behind",
         ),
         (
@@ -179,7 +179,7 @@ def remove_git_data(local: GitDir) -> None:
             "sync",
             0,
             snapshot(
-                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files."
+                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files.    All synced!"
             ),
             "syncer_tests/update_mirror",
         ),
