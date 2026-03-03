@@ -90,12 +90,14 @@ class ProgramState(abc.ABC):
 
 def log_level_name(quiet: int, verbose: int) -> str | int:
     match verbose - quiet:
-        case -3:
+        case -4:
             return "CRITICAL"
-        case -2:
+        case -3:
             return "ERROR"
-        case -1:
+        case -2:
             return "WARNING"
+        case -1:
+            return "SUCCESS"
         case 0:
             return "INFO"
         case 1:

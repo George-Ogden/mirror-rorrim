@@ -35,7 +35,7 @@ def remove_git_data(local: GitDir) -> None:
             # abs path to config
             "install --config .mirror.yaml",
             0,
-            snapshot(""),
+            snapshot("Install complete!"),
             "installer_tests/empty_repo_with_config",
         ),
         (
@@ -69,7 +69,7 @@ def remove_git_data(local: GitDir) -> None:
             # abs path + remote (valid)
             "install --config-repo https://github.com/George-Ogden/mirror-rorrim-test-data/ --config-file /config-only.yaml",
             0,
-            snapshot(""),
+            snapshot("Install complete!"),
             None,
         ),
         (
@@ -103,14 +103,16 @@ def remove_git_data(local: GitDir) -> None:
             # overwrite local mirror file
             "install -C https://github.com/George-Ogden/mirror-rorrim-test-data --config-file config-only.yaml",
             0,
-            snapshot("'.mirror.yaml' has been overwritten during installation."),
+            snapshot(
+                "'.mirror.yaml' has been overwritten during installation.    Install complete!"
+            ),
             "installer_tests/remote_config_overwrite",
         ),
         (
             # overwrite local mirror file with itself
             "install",
             0,
-            snapshot(""),
+            snapshot("Install complete!"),
             "installer_tests/remote_config_overwrite",
         ),
         # check tests
@@ -118,7 +120,7 @@ def remove_git_data(local: GitDir) -> None:
             # works fine
             "check",
             0,
-            snapshot(""),
+            snapshot("All up to date!"),
             "checker_tests/up_to_date",
         ),
         (
@@ -142,7 +144,7 @@ def remove_git_data(local: GitDir) -> None:
             # works fine
             "sync",
             0,
-            snapshot(""),
+            snapshot("All synced!"),
             "syncer_tests/behind",
         ),
         (
@@ -177,7 +179,7 @@ def remove_git_data(local: GitDir) -> None:
             "sync",
             0,
             snapshot(
-                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files."
+                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files.    All synced!"
             ),
             "syncer_tests/update_mirror",
         ),
