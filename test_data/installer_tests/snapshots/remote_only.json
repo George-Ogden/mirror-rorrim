@@ -1,0 +1,3 @@
+{
+  ".mirror.yaml": "repos:\n  - source: https://github.com/George-Ogden/remote-installer-test-data\n    files:\n      - .mirror.yaml: config-only.yaml\n"
+}

@@ -5,18 +5,16 @@ import sys
 import textwrap
 
 import git
+from inline_snapshot import external_file
+from inline_snapshot._external._external_file import ExternalFile
 from loguru import logger
 import pytest
 from pytest import FixtureRequest, LogCaptureFixture
-from syrupy.assertion import SnapshotAssertion
-from syrupy.extensions.amber import AmberSnapshotExtension
-from syrupy.location import PyTestLocation
-from syrupy.types import SnapshotIndex
 import yaml
 from yaml import Node
 
 from .logger import ProgramState
-from .typed_path import AbsDir, AbsFile, GitDir, RelDir, RelFile
+from .typed_path import AbsDir, AbsFile, Ext, GitDir, RelDir, RelFile
 
 
 @pytest.fixture
@@ -37,20 +35,19 @@ def local_git_repo(typed_tmp_path: AbsDir, request: FixtureRequest) -> Generator
     os.chdir(request.config.invocation_params.dir)
 
 
-class DifferentNameExtension(AmberSnapshotExtension):
-    location: AbsFile
-
-    @classmethod
-    def get_location(cls, *, test_location: PyTestLocation, index: SnapshotIndex = 0) -> str:
-        return os.fspath(cls.location)
+@pytest.fixture
+def snapshot_file(test_data_path: AbsDir, test_name: str) -> AbsFile:
+    return test_data_path / RelDir("snapshots") / RelFile(test_name)
 
 
 @pytest.fixture
-def snapshot(
-    snapshot: SnapshotAssertion, test_data_path: AbsDir, test_name: str
-) -> SnapshotAssertion:
-    DifferentNameExtension.location = test_data_path / RelDir("snapshots") / RelFile(test_name)
-    return snapshot.use_extension(DifferentNameExtension)
+def json_snapshot(snapshot_file: AbsFile) -> ExternalFile:
+    return external_file(os.fspath(snapshot_file + Ext(".json")))
+
+
+@pytest.fixture
+def text_snapshot(snapshot_file: AbsFile) -> ExternalFile:
+    return external_file(os.fspath(snapshot_file + Ext(".txt")))
 
 
 @pytest.fixture(autouse=True)

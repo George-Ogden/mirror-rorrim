@@ -21,7 +21,6 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
-        exclude: test_data/.*/snapshots/
       - id: requirements-txt-fixer
 
   - repo: https://github.com/George-Ogden/linter/
@@ -64,6 +63,7 @@ repos:
     rev: v2.4.0
     hooks:
       - id: check-merge-conflict
+        exclude: test_data/.*/snapshots/
       - id: dbg-check
         exclude: test_data/.*/snapshots/
       - id: todo-check

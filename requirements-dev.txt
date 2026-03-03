@@ -8,5 +8,4 @@ prek
 pytest
 pytest-timeout
 ruff
-syrupy
 types-pyyaml

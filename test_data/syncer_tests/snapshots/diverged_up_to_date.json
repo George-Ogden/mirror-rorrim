@@ -1,0 +1,6 @@
+{
+  ".pre-commit-config.yaml": "default_stages: [\"pre-commit\"]\ndefault_install_hook_types: [\"pre-commit\", \"commit-msg\"]\n\nrepos:\n  - repo: https://github.com/pre-commit/pre-commit-hooks\n    rev: v7.0.0\n    hooks:\n      - id: end-of-file-fixer\n      - id: mixed-line-ending\n      - id: trailing-whitespace\n\n  - repo: https://github.com/George-Ogden/pre-commit-hooks\n    rev: v2.0.3\n    hooks:\n      - id: check-merge-conflict\n      - id: todo-check\n      - id: spell-check-commit-msgs\n",
+  "LICENSE": "The LICENSE holds new data now.\n",
+  ".mirror.yaml": "repos:\n  - source: https://github.com/George-Ogden/remote-installer-test-data\n    files:\n      - .pre-commit-config.yaml\n      - LICENSE\n",
+  ".mirror.lock": "# DANGER: EDIT AT YOUR OWN RISK. Track this file in version control so that others can sync files correctly.\n- commit: dfbf6e928e1414ffe183bf3a20d9c158a07c0bf1\n  files:\n  - .pre-commit-config.yaml\n  - LICENSE\n  source: https://github.com/George-Ogden/remote-installer-test-data\n"
+}

@@ -1,0 +1,12 @@
+this is a common line
+<<<<<<< ours
+this line below didn't exist
+neither this
+but was added
+to cause confusion
+=======
+some extra text is added
+to ensure a conflict happens
+and the patch cannot apply cleanly
+which is preferred
+>>>>>>> theirs

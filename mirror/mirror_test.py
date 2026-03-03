@@ -3,9 +3,9 @@ import os
 import tempfile
 
 from inline_snapshot import snapshot
+from inline_snapshot._external._external_file import ExternalFile
 import pytest
 from pytest import LogCaptureFixture
-from syrupy.assertion import SnapshotAssertion
 
 from .config_parser import Parser
 from .constants import MIRROR_LOCK
@@ -138,7 +138,7 @@ def multiple_repos_local_test_case() -> Mirror:
         (multiple_repos_local_test_case(), multiple_repos_local_test_case.__name__),
     ],
 )
-def test_mirror_state(mirror: Mirror, snapshot: SnapshotAssertion, typed_tmp_path: AbsDir) -> None:
+def test_mirror_state(mirror: Mirror, text_snapshot: ExternalFile, typed_tmp_path: AbsDir) -> None:
     mirror.checkout_all()
     with open(typed_tmp_path / RelFile(MIRROR_LOCK), "a+") as f:
         mirror.state.dump(f)
@@ -147,7 +147,7 @@ def test_mirror_state(mirror: Mirror, snapshot: SnapshotAssertion, typed_tmp_pat
         if hasattr(mirror, "__replacement__"):
             for search, replacement in mirror.__replacement__.items():
                 contents = contents.replace(search, replacement)
-        assert contents == snapshot
+        assert contents == text_snapshot
 
 
 def all_up_to_date_test_case() -> Mirror:

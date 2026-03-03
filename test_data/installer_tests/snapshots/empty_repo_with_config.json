@@ -1,0 +1,5 @@
+{
+  "_debug_init.py": "from .builtins import install, uninstall\nfrom .config import CONFIG\nfrom .debug import dbg\nfrom .format import pformat, pprint\n\n__all__ = [\"CONFIG\", \"dbg\", \"install\", \"pformat\", \"pprint\", \"uninstall\"]\n",
+  "debug_init.py": "from _debug import CONFIG, dbg, install, pformat, pprint, uninstall\n\n__all__ = [\"CONFIG\", \"dbg\", \"install\", \"pformat\", \"pprint\", \"uninstall\"]\n",
+  ".mirror.yaml": "repos:\n  - source: https://github.com/George-Ogden/dbg\n    files:\n      - debug_init.py: debug/__init__.py\n      - _debug_init.py: _debug/__init__.py\n"
+}

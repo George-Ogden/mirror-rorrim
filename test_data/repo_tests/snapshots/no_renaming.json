@@ -1,0 +1,6 @@
+{
+  "file": "this file\nhas\nmultiple lines\n\n\nand a few blanks\n",
+  "empty": "",
+  "conflict": "it looks okay\nand then\nthis:\n<<<<<<< ours\n\n  ____          _   _  _____\n |  _ \\   /\\   | \\ | |/ ____|\n | |_) | /  \\  |  \\| | |  __\n |  _ < / /\\ \\ | . ` | | |_ |\n | |_) / ____ \\| |\\  | |__| |\n |____/_/    \\_\\_| \\_|\\_____|\n\n=======\n  ____   ____   ____  __  __\n |  _ \\ / __ \\ / __ \\|  \\/  |\n | |_) | |  | | |  | | \\  / |\n |  _ <| |  | | |  | | |\\/| |\n | |_) | |__| | |__| | |  | |\n |____/ \\____/ \\____/|_|  |_|\n>>>>>>> theirs\n\ncreates a conflict\nthat needs resolving\nto make it okay\nand to test\nit happened correctly\n",
+  "identical": "identical\n"
+}
