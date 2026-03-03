@@ -36,7 +36,7 @@ class Mirror:
         self.checkout_all()
         up_to_date = self.all_up_to_date()
         if up_to_date:
-            logger.info("All up to date!")
+            logger.success("All up to date!")
         return int(not up_to_date)
 
     def all_up_to_date(self) -> bool:

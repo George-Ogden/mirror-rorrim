@@ -118,7 +118,7 @@ def remove_git_data(local: GitDir) -> None:
             # works fine
             "check",
             0,
-            snapshot(""),
+            snapshot("All up to date!"),
             "checker_tests/up_to_date",
         ),
         (
