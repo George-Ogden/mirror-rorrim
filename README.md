@@ -145,7 +145,7 @@ If you use, `pre-commit`, consider adding this repo as a hook to check for updat
 
 ```yaml
 - repo: https://github.com/George-Ogden/mirror-rorrim/
-  rev: v0.4.7
+  rev: v0.4.8
   hooks:
     - id: mirror-check
 ```
