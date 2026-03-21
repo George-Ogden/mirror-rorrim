@@ -141,7 +141,7 @@ _You can still edit your local files manually, but you may need to resolve confl
 
 ### Pre-Commit
 
-If you use, `pre-commit`, consider adding this repo as a hook to check for updates:
+If you use, `pre-commit` or [`prek`](https://prek.j178.dev/), consider adding this repo as a hook to check for updates:
 
 ```yaml
 default_install_hook_types: [pre-commit, post-commit, pre-push]
