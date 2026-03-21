@@ -144,11 +144,15 @@ _You can still edit your local files manually, but you may need to resolve confl
 If you use, `pre-commit`, consider adding this repo as a hook to check for updates:
 
 ```yaml
+default_install_hook_types: [pre-commit, post-commit, pre-push]
+
 - repo: https://github.com/George-Ogden/mirror-rorrim/
   rev: v0.4.8
   hooks:
     - id: mirror-check
 ```
+
+It runs as a `post-commit` and `pre-push` hook, so don't forget to add the `default_install_hook_types` section at the top.
 
 ## Contributing
 
