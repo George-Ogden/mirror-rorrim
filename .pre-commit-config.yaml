@@ -8,7 +8,7 @@ ci:
 
 repos:
   - repo: https://github.com/George-Ogden/mirror-rorrim/
-    rev: v0.4.7
+    rev: v0.4.8
     hooks:
       - id: mirror-check
         fail_fast: true
@@ -36,7 +36,7 @@ repos:
         args: [--severity=warning]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit/
-    rev: v0.15.5
+    rev: v0.15.7
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -60,7 +60,7 @@ repos:
       - id: codespell
 
   - repo: https://github.com/George-Ogden/pre-commit-hooks/
-    rev: v3.0.0
+    rev: v3.0.2
     hooks:
       - id: check-merge-conflict
         exclude: test_data/.*/snapshots/

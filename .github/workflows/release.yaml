@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   tag-and-release:
-    uses: George-Ogden/actions/.github/workflows/python-release.yaml@v4.1.0
+    uses: George-Ogden/actions/.github/workflows/python-release.yaml@v4.2.0
     with:
       validation-code:
       validation-script: mirror sync

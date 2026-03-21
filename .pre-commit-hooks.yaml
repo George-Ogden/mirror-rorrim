@@ -7,3 +7,4 @@
   pass_filenames: false
   require_serial: true
   description: Mirror|rorriM
+  stages: [post-commit, pre-push]
