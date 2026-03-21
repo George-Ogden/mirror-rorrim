@@ -121,8 +121,7 @@ def check(pre_commit: bool) -> ExitCode:
     checker = MirrorChecker(target=GitDir.cwd())
     if (return_value := checker.check()) and pre_commit:
         logger.critical(
-            f"{MIRROR_NAME} config files are not up to date; run `mirror sync` to update.\n"
-            "(You may want to stash your changes and commit the sync separately.)"
+            f"{MIRROR_NAME} config files are not up to date; run `mirror sync` to update."
         )
     return return_value
 

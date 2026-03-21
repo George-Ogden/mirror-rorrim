@@ -136,9 +136,7 @@ def remove_git_data(local: GitDir) -> None:
             # behind with pre-commit
             "check --pre-commit",
             1,
-            snapshot(
-                "Mirror|rorriM config files are not up to date; run `mirror sync` to update.    (You may want to stash your changes and commit the sync separately.)"
-            ),
+            snapshot("Mirror|rorriM config files are not up to date; run `mirror sync` to update."),
             "checker_tests/behind",
         ),
         # sync tests
