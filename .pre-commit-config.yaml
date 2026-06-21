@@ -83,6 +83,12 @@ repos:
           .pre-commit-config.yaml|
           .gitignore
           )
+      - id: absolute-imports-check
+        args: [--disallowed-module, mirror]
+        exclude: (?x)^(
+          mirror/__main__.py|
+          main.py
+          )$
       - id: mypy
         args: [-r, requirements-dev.txt, --show-traceback]
       - id: spell-check-commit-msgs
