@@ -161,7 +161,7 @@ def local_repo_state_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
     add_commit(repo_dir, dict(file1="file1", file2="file2", file3="file3"))
     commit = git.Repo(repo_dir).git.log(n=1, format="%H")
     return quick_mirror_repo(repo_dir, ["file1", ("file2", "file3")]), quick_repo_state(
-        repo_dir, snapshot(commit), ["file1", "file2"]
+        repo_dir, commit, ["file1", "file2"]
     )
 
 
@@ -170,7 +170,7 @@ def repeated_file_test_case() -> tuple[MirrorRepo, MirrorRepoState]:
     add_commit(repo_dir, dict(file1="file1"))
     commit = git.Repo(repo_dir).git.log(n=1, format="%H")
     return quick_mirror_repo(repo_dir, ["file1", ("file1", "file2")]), quick_repo_state(
-        repo_dir, snapshot(commit), ["file1"]
+        repo_dir, commit, ["file1"]
     )
 
 
