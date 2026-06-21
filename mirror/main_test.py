@@ -175,11 +175,18 @@ def remove_git_data(local: GitDir) -> None:
             "syncer_tests/untracked_file",
         ),
         (
+            # update with conflict
+            "sync",
+            0,
+            snapshot("Conflict detected in '.pre-commit-config.yaml'!    All synced!"),
+            "syncer_tests/merge_conflict",
+        ),
+        (
             # update mirror file
             "sync",
             0,
             snapshot(
-                "'.mirror.yaml' modified while syncing. Please merge any conflicts then rerun to sync any added files.    All synced!"
+                "'.mirror.yaml' modified while syncing. Please merge all conflicts then rerun to sync any added files.    All synced!"
             ),
             "syncer_tests/update_mirror",
         ),

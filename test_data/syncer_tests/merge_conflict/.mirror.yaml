@@ -1,0 +1,4 @@
+repos:
+  - source: https://github.com/George-Ogden/mirror-rorrim-test-data
+    files:
+      - .pre-commit-config.yaml

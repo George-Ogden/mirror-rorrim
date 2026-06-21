@@ -106,8 +106,14 @@ class Diff:
         with describe(f"Applying patch from {self.file.source} to {self.file.target}"):
             logger.trace(f"patch = {self.patch}")
             conflict = GitHelper.apply_patch(local, self.patch)
-            if self.patch and self.file.target == MIRROR_FILE and ProgramState.command == "sync":
-                logger.warning(
-                    f"{MIRROR_FILE} modified while syncing. Please merge any conflicts then rerun to sync any added files."
-                )
+            self._display_update_message(conflict)
         return conflict
+
+    def _display_update_message(self, conflict: Conflict) -> None:
+        if self.patch and self.file.target == MIRROR_FILE and ProgramState.command == "sync":
+            conflict_message = "Please merge all conflicts then rerun to sync any added files."
+            conflict_free_message = "Please rerun to sync any added files."
+            extra_message = conflict_message if conflict else conflict_free_message
+            logger.warning(f"{MIRROR_FILE} modified while syncing. {extra_message}")
+        elif conflict:
+            logger.warning(f"Conflict detected in {self.file.target}!")
