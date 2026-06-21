@@ -147,7 +147,7 @@ If you use, `pre-commit` or [`prek`](https://prek.j178.dev/), consider adding th
 default_install_hook_types: [pre-commit, post-commit, pre-push]
 
 - repo: https://github.com/George-Ogden/mirror-rorrim/
-  rev: v0.4.9
+  rev: v0.4.10
   hooks:
     - id: mirror-check
 ```

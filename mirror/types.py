@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import enum
 import io
 from typing import ClassVar
 
@@ -15,3 +16,11 @@ class Commit:
 
 
 type PyFile = io.TextIOWrapper
+
+
+class Conflict(enum.Enum):
+    Conflict = True
+    ConflictFree = False
+
+    def __bool__(self) -> bool:
+        return self.value

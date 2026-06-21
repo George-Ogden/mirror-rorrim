@@ -52,9 +52,11 @@ def test_diff_apply_new_file(
     current_path = test_data_path / RelDir("local") / file.target
     if current_path.exists():
         shutil.copy2(current_path, tmp_filepath)
-    diff.apply(local_git_repo)
+    result = diff.apply(local_git_repo)
     with open(tmp_filepath) as f:
-        assert f.read() == text_snapshot
+        contents = f.read()
+    assert contents == text_snapshot
+    assert ("<" * 7 in contents) == bool(result)
 
 
 @pytest.mark.typed
@@ -169,6 +171,8 @@ def test_diff_apply_versioned_file(
     if (test_data_path / file.target).exists():
         (local_git_repo / file.target).path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(test_data_path / file.target, local_git_repo / file.target)
-    diff.apply(local_git_repo)
+    result = diff.apply(local_git_repo)
     with open(local_git_repo / file.target) as f:
-        assert f.read() == text_snapshot
+        contents = f.read()
+    assert contents == text_snapshot
+    assert ("<" * 7 in contents) == bool(result)

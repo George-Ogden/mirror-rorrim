@@ -3,11 +3,13 @@ from dataclasses import dataclass
 import functools
 import os
 from os import PathLike
+import re
 import shutil
 from subprocess import PIPE, Popen
 import traceback
 from typing import Any, cast
 
+from extra_types.type_utils import strict_not_none
 import git
 from git import HEAD, GitCommandError, GitError, Head, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
@@ -17,8 +19,7 @@ from .constants import MIRROR_MONITOR_EXTENSION, MIRROR_SEMAPHORE_EXTENSION
 from .lock import FileSystemSemaphore
 from .logger import describe
 from .typed_path import AbsDir, GitDir, RelFile, Remote
-from .types import Commit
-from .utils import strict_not_none
+from .types import Commit, Conflict
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -164,8 +165,13 @@ class GitHelper:
         cls.run_command(local, "add", *(os.fspath(file) for file in files))
 
     @classmethod
-    def apply_patch(cls, local: GitDir, patch: str) -> None:
-        cls.run_command(local, "apply", "--allow-empty", "-3", "-", stdin=patch)
+    def apply_patch(cls, local: GitDir, patch: str) -> Conflict:
+        result = cls.run_command(local, "apply", "--allow-empty", "-3", "-", stdin=patch)
+        if result.returncode == 1 and re.search(
+            r"Applied patch to '.*' with conflicts.", result.stderr, flags=re.DOTALL
+        ):
+            return Conflict.Conflict
+        return Conflict.ConflictFree
 
     @classmethod
     def hash_object(cls, local: GitDir, blob: bytes) -> None:

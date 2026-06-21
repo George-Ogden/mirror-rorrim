@@ -1,12 +1,15 @@
 -r requirements.txt
+git+https://github.com/George-Ogden/extra-types; python_version >= "3.12"
 git+https://github.com/George-Ogden/mirror-rorrim; python_version >= "3.12"
 git+https://github.com/George-Ogden/mypy-pytest; python_version >= "3.12"
 git+https://github.com/George-Ogden/pytest-dbg; python_version >= "3.11"
+git+https://github.com/George-Ogden/utils; python_version >= "3.12"
 inline-snapshot
-mypy==1.19.1
+mypy
 pre-commit
 prek
-pytest
+py-spy
+pytest>=9.0.0
 pytest-timeout
-ruff==0.15.7
+ruff==0.15.18
 types-pyyaml
