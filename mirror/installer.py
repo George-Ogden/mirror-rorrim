@@ -70,15 +70,15 @@ class MirrorInstaller(MirrorManager):
     def source_remote(self) -> Remote | None:
         match self.source:
             case [remote, _]:
-                return cast(Remote, remote)
+                return remote
         return None
 
     @property
     def source_path(self) -> RelFile | AbsFile:
         match self.source:
             case [_, path]:
-                return cast(RelFile, path)
-        return cast(RelFile | AbsFile, self.source)
+                return path
+        return self.source
 
     @property
     def mirror_source(self) -> RelFile | AbsFile:

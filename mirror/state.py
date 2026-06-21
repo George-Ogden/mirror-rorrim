@@ -10,13 +10,13 @@ import re
 import typing
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Self, cast
 
+import more_itertools as mit
 import yaml
 from yaml import MappingNode, Node, ScalarNode, SequenceNode, YAMLError
 from yaml.constructor import ConstructorError
 
 from .typed_path import RelFile, Remote
 from .types import Commit
-from .utils import all_unique
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance, SupportsRead, SupportsWrite
@@ -160,7 +160,7 @@ class MirrorState(AutoState):
     repos: Sequence[MirrorRepoState]
 
     def __post_init__(self) -> None:
-        if not all_unique(repo.source.canonical for repo in self.repos):
+        if not mit.all_unique(repo.source.canonical for repo in self.repos):
             raise ValueError("Expected all sources to be unique.")
 
     def __iter__(self) -> Iterator[MirrorRepoState]:

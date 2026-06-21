@@ -8,6 +8,7 @@ from subprocess import PIPE, Popen
 import traceback
 from typing import Any, cast
 
+from extra_types.type_utils import strict_not_none
 import git
 from git import HEAD, GitCommandError, GitError, Head, InvalidGitRepositoryError, Tree
 from git import Repo as GitRepo
@@ -18,7 +19,6 @@ from .lock import FileSystemSemaphore
 from .logger import describe
 from .typed_path import AbsDir, GitDir, RelFile, Remote
 from .types import Commit
-from .utils import strict_not_none
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
