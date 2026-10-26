@@ -1,7 +1,7 @@
 [project]
 name = "mirror-rorrim"
 readme = "README.md"
-requires-python = ">=3.12,<3.15"
+requires-python = ">=3.12,<3.16"
 license-files = ["LICENSE"]
 authors = [{ name = "George Ogden" }]
 dependencies = [
