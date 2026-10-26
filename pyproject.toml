@@ -4,7 +4,15 @@ readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license-files = ["LICENSE"]
 authors = [{ name = "George Ogden" }]
-dependencies = []
+dependencies = [
+  "click>=8,<9",
+  "extra-type-helpers>=0.8.4",
+  "gitpython>=3.1.46",
+  "loguru>=0.4,<0.8",
+  "more-itertools>=9,<12",
+  "platformdirs>=2,<5",
+  "pyyaml>=4,<7",
+]
 dynamic = ["version"]
 
 [project.scripts]
@@ -12,7 +20,6 @@ mirror = "mirror:main_cli"
 
 [dependency-groups]
 dev = [
-  "mirror-rorrim ; python_full_version >= '3.12'",
   "py-spy",
   { include-group = "lint" },
   { include-group = "test" },
@@ -31,6 +38,7 @@ lint = [
 ]
 test = [
   "inline-snapshot",
+  "pre-commit",
   "pytest>=9.0.0",
   "pytest-dbg ; python_full_version >= '3.11'",
   "pytest-timeout",
@@ -62,6 +70,5 @@ exclude = ["test*"]
 extra-type-helpers = { git = "https://github.com/George-Ogden/extra-types" }
 georges-utils = { git = "https://github.com/George-Ogden/utils" }
 linter = { git = "https://github.com/George-Ogden/linter/" }
-mirror-rorrim = { git = "https://github.com/George-Ogden/mirror-rorrim" }
 mypy-pytest-plugin = { git = "https://github.com/George-Ogden/mypy-pytest" }
 pytest-dbg = { git = "https://github.com/George-Ogden/pytest-dbg" }
