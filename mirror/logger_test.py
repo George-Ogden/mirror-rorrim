@@ -227,15 +227,15 @@ def notacommand(*args: Any) -> int:
 )
 def test_record_command(command: Callable, name: str | None, remove_command: None) -> None:
     with pytest.raises(AttributeError):
-        ProgramState.command  # noqa: B018
+        ProgramState.command  # ruff: ignore[useless-expression]
     if name is None:
         with pytest.raises(TypeError):
             ProgramState.record_command(command)
         with pytest.raises(AttributeError):
-            ProgramState.command  # noqa: B018
+            ProgramState.command  # ruff: ignore[useless-expression]
     else:
         run_command = ProgramState.record_command(command)
         with pytest.raises(AttributeError):
-            ProgramState.command  # noqa: B018
+            ProgramState.command  # ruff: ignore[useless-expression]
         run_command(1, 2)
         assert ProgramState.command == name

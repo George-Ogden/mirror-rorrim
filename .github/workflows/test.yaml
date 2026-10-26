@@ -3,20 +3,22 @@ name: Run Python Tests
 on:
   push:
     branches:
-      - master
+      - m
   pull_request:
     branches:
-      - master
+      - m
 
 jobs:
-  run-pytest:
-    uses: George-Ogden/actions/.github/workflows/python-test.yaml@v4.6.3
+  run-pytest-lowest:
+    uses: George-Ogden/actions/.github/workflows/python-test.yaml@v5.2.1
     with:
-      python-versions: "['3.14']"
+      python-versions: "['3.15']"
       pytest-flags: -vv -m "not local"
+      package-resolution: lowest-direct
 
-  readme-check:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+  run-pytest-highest:
+    uses: George-Ogden/actions/.github/workflows/python-test.yaml@v5.2.1
+    with:
+      python-versions: "['3.15']"
+      pytest-flags: -vv -m "not local"
+      package-resolution: highest

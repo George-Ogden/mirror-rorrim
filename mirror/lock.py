@@ -23,7 +23,7 @@ class FileSystemLock:
     @classmethod
     def create(cls, filepath: AbsFile) -> Self:
         try:
-            file = open(filepath, "x")  # noqa: SIM115
+            file = open(filepath, "x")  # ruff: ignore[open-file-with-context-handler]
             lock = cls.acquire_non_blocking(file)
             if lock is None:
                 file.close()
@@ -41,7 +41,7 @@ class FileSystemLock:
     @classmethod
     def edit(cls, filepath: AbsFile) -> Self:
         try:
-            file = open(filepath, "r+")  # noqa: SIM115
+            file = open(filepath, "r+")  # ruff: ignore[open-file-with-context-handler]
             lock = cls.acquire_non_blocking(file)
             if lock is None:
                 file.close()
@@ -97,7 +97,7 @@ class FileSystemSemaphore:
 
     @classmethod
     def acquire(cls, filepath: AbsFile) -> Self:
-        file = open(filepath, "a+")  # noqa: SIM115
+        file = open(filepath, "a+")  # ruff: ignore[open-file-with-context-handler]
         try:
             fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
             cls.write_key(file)

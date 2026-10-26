@@ -65,12 +65,12 @@ def test_acquire_release_two_processes_with_release(tmp_lock_path: AbsFile) -> N
 
 @pytest.mark.typed
 def test_locking_destructor_unlocks_lock(tmp_lock_path: AbsFile) -> None:
-    file = open(tmp_lock_path, "x")  # noqa: SIM115
+    file = open(tmp_lock_path, "x")  # ruff: ignore[open-file-with-context-handler]
     lock = FileSystemLock.acquire_non_blocking(file)
     del lock
     assert file.closed
 
-    file = open(tmp_lock_path, "r+")  # noqa: SIM115
+    file = open(tmp_lock_path, "r+")  # ruff: ignore[open-file-with-context-handler]
     lock = FileSystemLock.acquire_non_blocking(file)
     assert lock
 
@@ -81,7 +81,7 @@ def test_unlock(tmp_lock_path: AbsFile, test_data_path: AbsDir) -> None:
         def dump(self, f: SupportsWrite[str]) -> None:
             f.write("success\n")
 
-    file = open(tmp_lock_path, "w")  # noqa: SIM115
+    file = open(tmp_lock_path, "w")  # ruff: ignore[open-file-with-context-handler]
     lock = FileSystemLock.acquire_non_blocking(file)
     assert lock
     lock.unlock(SuccessDumper())
@@ -96,7 +96,7 @@ def test_unlock_failed_write(tmp_lock_path: AbsFile) -> None:
         def dump(self, f: SupportsWrite[str]) -> None:
             raise RuntimeError()
 
-    file = open(tmp_lock_path, "w")  # noqa: SIM115
+    file = open(tmp_lock_path, "w")  # ruff: ignore[open-file-with-context-handler]
     lock = FileSystemLock.acquire_non_blocking(file)
     assert lock
 
