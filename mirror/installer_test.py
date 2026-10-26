@@ -65,6 +65,6 @@ def test_installer_install(
     setup_repo(local_git_repo, test_data_path / RelDir(test_name))
 
     if isinstance(installer.source, RelFile):
-        object.__setattr__(installer, "source", local_git_repo / installer.source)
+        object.__setattr__(installer, "source", local_git_repo / installer.source)  # ruff: ignore[unnecessary-dunder-call]
     installer.install()
     assert snapshot_of_repo(local_git_repo, include_lockfile=False) == json_snapshot

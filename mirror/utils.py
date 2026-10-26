@@ -1,30 +1,22 @@
+import sys
 import typing
-from typing import Any, Literal, TypeAliasType, overload
+from typing import Any, Literal, TypeAliasType
 
+from extra_types.type_utils import strict_cast as original_strict_cast
 from extra_types.type_utils import strict_not_none
 
-
-@overload
-def strict_cast[T](type_: type[T], expr: Any, /) -> T: ...
-
-
-@overload
-def strict_cast(type_: object, expr: Any, /) -> Any: ...
+if sys.version_info >= (3, 15):
+    from typing import TypeForm
+else:
+    from typing_extensions import TypeForm
 
 
-def strict_cast(type_: object, expr: Any, /) -> Any:
+def strict_cast[T](type_: TypeForm[T], expr: Any, /) -> T:
     if isinstance(type_, TypeAliasType):
-        return strict_cast(type_.__value__, expr)
+        return strict_cast(type_.__value__, expr)  # type: ignore[unreachable]
     if typing.get_origin(type_) is Literal:
         return strict_literal_cast(strict_not_none(typing.get_args(type_)), expr)
-    try:
-        type_checks = isinstance(expr, type_)  # type: ignore
-    except TypeError:
-        ...
-    else:
-        if not type_checks:
-            raise TypeError()
-    return expr
+    return original_strict_cast(type_, expr)
 
 
 def strict_literal_cast[T](types: tuple, expr: T, /) -> T:

@@ -7,11 +7,12 @@ authors = [{ name = "George Ogden" }]
 dependencies = [
   "click>=8,<9",
   "extra-type-helpers>=0.8.4",
-  "gitpython>=3.1.46",
+  "gitpython>=3.1.46,<4",
   "loguru>=0.4,<0.8",
-  "more-itertools>=9,<12",
+  "more-itertools>=9.0.0,<12",
   "platformdirs>=2,<5",
   "pyyaml>=4,<7",
+  "typing_extensions>=4.16.0,<5",
 ]
 dynamic = ["version"]
 
@@ -50,7 +51,6 @@ types = [
   { include-group = "test" },
 ]
 utils = [
-  "extra-type-helpers ; python_full_version >= '3.12'",
   "georges-utils ; python_full_version >= '3.12'",
 ]
 
@@ -67,7 +67,6 @@ include = ["mirror*"]
 exclude = ["test*"]
 
 [tool.uv.sources]
-extra-type-helpers = { git = "https://github.com/George-Ogden/extra-types" }
 georges-utils = { git = "https://github.com/George-Ogden/utils" }
 linter = { git = "https://github.com/George-Ogden/linter/" }
 mypy-pytest-plugin = { git = "https://github.com/George-Ogden/mypy-pytest" }

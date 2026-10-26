@@ -20,7 +20,7 @@ def test_strict_cast_literal() -> None:
 def test_strict_cast_literal_fail() -> None:
     x: int = 5
     with pytest.raises(TypeError):
-        _: Literal[5] = strict_cast(Literal[2, 4, 6], x)
+        _: Literal[5] = strict_cast(Literal[2, 4, 6], x)  # type: ignore[arg-type]
 
 
 def test_strict_cast_union() -> None:
