@@ -6,6 +6,7 @@ ci:
   skip:
     - mirror-check
     - no-commit-to-branch
+    - semgrep
 
 repos:
   - repo: https://github.com/George-Ogden/mirror-rorrim/
@@ -45,7 +46,6 @@ repos:
             --config,
             .semgrep-rules/pre-commit.yaml,
             --autofix,
-            --quiet,
             --error,
             --skip-unknown-extensions,
             --disable-version-check,
