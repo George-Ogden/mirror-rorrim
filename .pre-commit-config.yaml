@@ -6,10 +6,11 @@ ci:
   skip:
     - mirror-check
     - no-commit-to-branch
+    - semgrep
 
 repos:
   - repo: https://github.com/George-Ogden/mirror-rorrim/
-    rev: v0.4.9
+    rev: v0.4.10
     hooks:
       - id: mirror-check
         fail_fast: true
@@ -18,6 +19,7 @@ repos:
     hooks:
       - id: no-commit-to-branch
         fail_fast: true
+        args: [-b, m]
       - id: end-of-file-fixer
         stages: [pre-commit]
       - id: mixed-line-ending
@@ -26,21 +28,41 @@ repos:
         stages: [pre-commit]
       - id: check-added-large-files
         stages: [pre-commit]
+        exclude: ^uv\.lock$
       - id: check-merge-conflict
         stages: [pre-commit]
         args: [--assume-in-merge]
         exclude: test_data/.*/snapshots/
 
-  - repo: https://github.com/pre-commit/pre-commit-hooks/
-    rev: v6.0.0
+  - repo: https://github.com/semgrep/pre-commit/
+    rev: v1.181.1
     hooks:
-      - id: requirements-txt-fixer
+      - id: semgrep
+        require_serial: true
+        args:
+          [
+            --config,
+            .semgrep-rules/python.yaml,
+            --config,
+            .semgrep-rules/pre-commit.yaml,
+            --autofix,
+            --error,
+            --skip-unknown-extensions,
+            --disable-version-check,
+          ]
+        exclude: ^\.semgrep-rules/
 
   - repo: https://github.com/George-Ogden/linter/
-    rev: v2.1.1
+    rev: v2.1.3
     hooks:
       - id: lint
         args: [--fix]
+
+  - repo: https://github.com/scop/pre-commit-shfmt/
+    rev: v3.14.1-1
+    hooks:
+      - id: shfmt
+        stages: [pre-commit]
 
   - repo: https://github.com/koalaman/shellcheck-precommit/
     rev: v0.11.0
@@ -49,18 +71,25 @@ repos:
         args: [--severity=warning]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit/
-    rev: v0.15.18
+    rev: v0.17.2
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
         args: [--config, format.skip-magic-trailing-comma = true]
 
-  - repo: https://github.com/pre-commit/mirrors-prettier/
-    rev: v4.0.0-alpha.8
+  - repo: https://github.com/rbubley/mirrors-prettier/
+    rev: v3.9.10
     hooks:
       - id: prettier
         exclude: /syntax_error\.yaml
+
+  - repo: https://github.com/tombi-toml/tombi-pre-commit/
+    rev: v1.9.5
+    hooks:
+      - id: tombi-format
+        alias: tombi
+        exclude: \.lock$
 
   - repo: https://github.com/rhysd/actionlint/
     rev: v1.7.12
@@ -68,29 +97,34 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/codespell-project/codespell/
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
+        exclude: \.lock$
+        args:
+          - -f
+          - --regex
+          # Copied from https://github.com/codespell-project/codespell/issues/2730#issuecomment-1657006554.
+          - |
+            (?<![a-zà-öø-ÿ])[a-zà-öø-ÿ'`]+|[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'`]*|[a-zà-öø-ÿ]+'[a-zà-öø-ÿ]*|[a-zà-öø-ÿ]+(?=[_-])|[a-zà-öø-ÿ]+(?=[A-ZÀ-ÖØ-Þ])|\d+
 
   - repo: https://github.com/George-Ogden/pre-commit-hooks/
     rev: v4.1.1
     hooks:
-      - id: dbg-check
-        exclude: test_data/.*/snapshots/
-      - id: todo-check
-        exclude: (?x)(
-          /snapshots/|
-          .pre-commit-config.yaml|
-          .gitignore
-          )
       - id: absolute-imports-check
         args: [--disallowed-module, mirror]
         exclude: (?x)^(
           mirror/__main__.py|
           main.py
           )$
-      - id: mypy
-        args: [-r, requirements-dev.txt, --show-traceback]
+      - id: dbg-check
+        exclude: test_data/.*/snapshots/
+      - id: todo-check
+        exclude: (?x)(
+          /snapshots/|
+          \.pre-commit-config\.yaml|
+          \.gitignore
+          )
       - id: spell-check-commit-msgs
       - id: mirror-auto-msg
       - id: version-txt-auto-msg

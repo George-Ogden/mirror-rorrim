@@ -135,7 +135,7 @@ def normalize_message(
         error_msg = error_msg.replace(os.fspath(test_data_path), "TEST_DATA")
     if git_dir is not None:
         git_dirs = [git_dir] if isinstance(git_dir, AbsDir) else git_dir
-        for git_dir in git_dirs:  # noqa: PLR1704
+        for git_dir in git_dirs:  # ruff: ignore[redefined-argument-from-local]
             error_msg = error_msg.replace(os.fspath(git_dir), "GIT_DIR")
             with contextlib.suppress(ValueError):
                 for commit in GitHelper.repo(git_dir).iter_commits():

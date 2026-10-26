@@ -118,7 +118,7 @@ def multiple_repos_local_test_case() -> Mirror:
             quick_mirror_repo(remote2, ["file4", "file5", ("file3", "file6")]),
         ]
     )
-    object.__setattr__(
+    object.__setattr__(  # ruff: ignore[unnecessary-dunder-call]
         mirror,
         "__replacement__",
         {remote1: "remote1", remote2: "remote2", commit1.sha: "commit1", commit2.sha: "commit2"},

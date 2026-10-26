@@ -83,10 +83,10 @@ def remove_git_data(local: GitDir) -> None:
         ),
         (
             # invalid config
-            "install --config-repo https://github.com/George-Ogden/dbg --config-file requirements.txt",
+            "install --config-repo https://github.com/George-Ogden/dbg --config-file version.txt",
             1,
             snapshot(
-                "Parsing config [failed]    Syncing all repos [failed]    ParserError: An unexpected error occurred during parsing @ requirements.txt:1:1: expected mirror mapping, got string."
+                "Parsing config [failed]    Syncing all repos [failed]    ParserError: An unexpected error occurred during parsing @ version.txt:1:1: expected mirror mapping, got string."
             ),
             None,
         ),

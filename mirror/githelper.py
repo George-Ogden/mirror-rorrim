@@ -121,7 +121,7 @@ class GitHelper:
                     logger.debug(e)
                     shutil.rmtree(local, ignore_errors=True)
                     cls._clone(remote, local)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:  # ruff: ignore[blind-except]
                 traceback.print_exc()
                 logger.debug(e)
                 raise GitError(f"Unable to checkout {remote}.") from None

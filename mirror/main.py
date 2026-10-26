@@ -1,3 +1,4 @@
+# ruff: file-ignore [escape-sequence-in-docstring]
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -26,7 +27,7 @@ def check_for_errors[**P](fn: Callable[P, ExitCode | None]) -> Callable[P, None]
     def main(*args: P.args, **kwargs: P.kwargs) -> None:
         try:
             exitcode = fn(*args, **kwargs)
-        except BaseException as e:  # noqa: BLE001
+        except BaseException as e:  # ruff: ignore[blind-except]
             logger.debug(f"Threw {type(e)}!")
             logger.trace(traceback.format_exc())
             message = str(e).strip()

@@ -14,7 +14,7 @@ from .utils import strict_cast
 
 
 @dataclass(frozen=True, slots=True)
-class describe:  # noqa: N801
+class describe:  # ruff: ignore[invalid-class-name]
     message: str
     _: KW_ONLY
     level: str = "TRACE"

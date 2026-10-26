@@ -3,15 +3,17 @@ name: Tag New Version and Release
 on:
   push:
     branches:
-      - master
+      - m
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   tag-and-release:
-    uses: George-Ogden/actions/.github/workflows/python-release.yaml@v4.6.3
+    uses: George-Ogden/actions/.github/workflows/python-release.yaml@v5.2.1
     with:
       validation-code:
       validation-script: mirror sync
+      python-version: "3.15"
